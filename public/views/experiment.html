@@ -1,0 +1,314 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Experiment page</title>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+    <script src='jsPsych/jspsych.js'></script>
+    <script src='jsPsych/plugins/jspsych-html-keyboard-response.js'></script>
+    <script src='jsPsych/plugins/jspsych-video-keyboard-multiple-responses-release.js'></script>
+    <script src='jsPsych/plugins/jspsych-call-function.js'></script>
+    <script src='jsPsych/plugins/jspsych-html-slider-response.js'></script>
+    <script src='jsPsych/plugins/jspsych-video-keyboard-response.js'></script>
+    <script src='jsPsych/plugins/jspsych-survey-html-form-ranking.js'></script>
+    <script src='jsPsych/plugins/jspsych-survey-html-form-slider.js'></script>
+    <link href='jsPsych/css/jspsych.css' rel='stylesheet' type='text/css'></link>
+    <link href='css/experiment.css' rel='stylesheet' type='text/css'></link>
+    <link rel='icon' type='image/png' href='/img/favicon.png' />
+	<style>
+	#questionnaire img{
+	    width: 200px;
+	}
+	#questionnaire input{
+	    font-size: 18px;
+        width: 50%;
+	}
+
+    #questionnaire-thead tr th p {
+        font-weight: normal;
+        margin-top: 0px;
+        margin-bottom: 7px;
+    }
+	</style>
+  </head>
+  <body>
+  </body>
+  <script>
+
+
+
+// by Pavlo Bazilinskyy <p.bazilinskyy@tudelft.nl>
+
+// Constants
+var n_videos = 12; // number of videos
+var n_repeat = 5; // number of repeats of each condition
+var n_videos_per_block = 5; // number of videos in each block
+var n_break = 10; // number of videos between each break
+var video_pfefix = 'videos/video_'; // prefix for videos
+var image_pfefix = 'img/'; // prefix for images
+var condition_images = [image_pfefix + 'colour_continue.png', image_pfefix + 'colour.png', image_pfefix + 'gesture_continue.png', image_pfefix + 'gesture.png', image_pfefix + 'implicit_continue.png', image_pfefix + 'implicit.png', image_pfefix + 'lightbar_continue.png', image_pfefix + 'lightbar.png', image_pfefix + 'posture_continue.png', image_pfefix + 'posture.png', image_pfefix + 'text_continue.png', image_pfefix + 'text.png'];
+
+ /**
+ * Returns a random integer between min (inclusive) and max (inclusive).
+ * The value is no lower than min (or the next integer greater than min
+ * if min isn't an integer) and no greater than max (or the next integer
+ * lower than max if max isn't an integer).
+ * Using Math.round() will give you a non-uniform distribution!
+ */
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
+ * Get finish code for the worker.
+ */
+function getFinishCode() {
+    var timestamp = window.performance.timing.navigationStart + window.performance.now();
+    var current_time = Math.round(timestamp);
+    var random_num = getRandomInt(1, 10000);
+    finish_code = 'E2' + current_time + 'RE' + random_num + '3Z';
+    return finish_code;
+}
+
+var finish_code = getFinishCode();
+
+/**
+ * Shuffles array in place.
+ * @param {Array} a items An array containing the items.
+ */
+function shuffle(a) {
+    var j, x, i;
+    for (i = a.length - 1; i > 0; i--) {
+        j = Math.floor(Math.random() * (i + 1));
+        x = a[i];
+        a[i] = a[j];
+        a[j] = x;
+    }
+    return a;
+}
+
+function onlyUnique(value, index, self) { 
+    return self.indexOf(value) === index;
+}
+
+// Arrays for storing data
+var video_ids = [];  // IDs of videos in stimuli
+var between_blocks = []; // instructions between blocks
+var video_stimuli = []; // blocks with videos
+
+// define instructions block
+var instructions_block = {
+    type: 'html-keyboard-response',
+    stimulus: '<div style="float: left; text-align: left"><p>You will watch 60 videos of approaching cars. Some cars will stop, and other cars will continue driving. Some cars have a special feature. This feature is informative about whether the car stops or continues driving.</p><p>Each video starts with a black screen. As soon as you see the black screen, press and HOLD the key \'F\'.</p><ol><li>Hold the key as long as you feel safe to cross.</li><li>Release the key if you do not feel safe to cross anymore.</li><li>You can press and release the key as many times as you want per video.</li></ol><p>The window of your browser should be at least 1300px wide and 800px tall. First, you will see two examples. Press \'C\' to proceed to the first example video.</p></div>',
+    choices: ['C'],
+};
+// populate array with video IDs
+for (var i = 1; i <= n_videos; i++) {
+	for (var j = 0; j < n_repeat; j++) {
+		video_ids.push(i);
+	}
+}
+// shuffle array with video IDs
+var video_ids_blocks = [];  // all groups shuffled
+var video_ids_1 =shuffle(video_ids.slice(0, 2 * n_repeat)) ;  // group 1
+var video_ids_2 = shuffle(video_ids.slice(2 * n_repeat, 4 * n_repeat));  // group 2
+var video_ids_3 = shuffle(video_ids.slice(4 * n_repeat, 6 * n_repeat));  // group 3
+var video_ids_4 = shuffle(video_ids.slice(6 * n_repeat, 8 * n_repeat));  // group 4
+var video_ids_5 = shuffle(video_ids.slice(8 * n_repeat, 10 * n_repeat));  // group 5
+var video_ids_6 = shuffle(video_ids.slice(10 * n_repeat));  // group 6
+video_ids_blocks.push(video_ids_1);
+video_ids_blocks.push(video_ids_2);
+video_ids_blocks.push(video_ids_3);
+video_ids_blocks.push(video_ids_4);
+video_ids_blocks.push(video_ids_5);
+video_ids_blocks.push(video_ids_6);
+video_ids_blocks = shuffle(video_ids_blocks);
+// get unique conditions and sort them
+conditions_ordered = [];
+conditions_ordered.push(video_ids_blocks[0].filter(onlyUnique));
+conditions_ordered.push(video_ids_blocks[1].filter(onlyUnique));
+conditions_ordered.push(video_ids_blocks[2].filter(onlyUnique));
+conditions_ordered.push(video_ids_blocks[3].filter(onlyUnique));
+conditions_ordered.push(video_ids_blocks[4].filter(onlyUnique));
+conditions_ordered.push(video_ids_blocks[5].filter(onlyUnique));
+conditions = conditions_ordered[0].concat(conditions_ordered[1], conditions_ordered[2], conditions_ordered[3], conditions_ordered[4], conditions_ordered[5]);
+
+video_ids = video_ids_blocks[0].concat(video_ids_blocks[1], video_ids_blocks[2], video_ids_blocks[3], video_ids_blocks[4], video_ids_blocks[5]);
+
+// build array with videos with stimuli
+for (var i = 0; i < n_videos * n_videos_per_block; i++) {
+    video_stimuli.push({
+        type: 'video-keyboard-multiple-responses-release',
+        autoplay: true,
+        controls: false,
+        width: 1280,
+        height: 720,
+        choices: ['F'],
+        sources: [video_pfefix + video_ids[i] + '.mp4'],
+        prompt: '<p>Press and HOLD \'F\' when you feel safe to cross.</p>',
+        on_finish: function(data) {
+            jsPsych.data.addDataToLastTrial({
+                worker_code: finish_code
+            });
+        }
+    });
+}
+// continue before showing the image
+var continue_block = {
+    type: 'html-keyboard-response',
+    stimulus: '<p>Press \'C\' to continue to the next video.</p>',
+    choices: ['C']
+};
+// black with image to be added before each video
+var image_block = {
+    type: 'html-keyboard-response',
+    stimulus: '<img src=\'' + image_pfefix + 'black_frame.png\'/><p>Press and HOLD \'F\' when you feel safe to cross.</p>',
+    choices: ['F'],
+};
+// build between blocks
+for (var i = 1; i <= n_videos * n_repeat / n_videos_per_block - 1; i++) {
+    var videos_done = n_videos_per_block * i;
+    between_blocks.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p>You have now completed ' + videos_done + ' videos out of ' + n_videos * n_repeat + '. When ready press \'C\' to proceed to the next batch.</p>',
+        choices: ['C']
+    });
+}
+// slider questions
+var slider_block_1 = {
+    type: 'html-slider-response',
+    labels: ['0', '20', '40', '60', '80', '100'],
+    stimulus: '<p></p>',
+    slider_width: 1000,
+    prompt: "<p style='width: 1000px'>Please rate the following statement based on 10 videos shown since the last break/start of the experiment: <strong>It was easy to understand the signal</strong> (0 = completely disagree, 100 = completely agree).</p>",
+    require_movement: true
+};
+var slider_block_2 = {
+    type: 'html-slider-response',
+    labels: ['0', '20', '40', '60', '80', '100'],
+    stimulus: '<p></p>',
+    slider_width: 1000,
+    prompt: "<p style='width: 1000px'>Please rate the following statement based on 10 videos shown since the last break/start of the experiment: <strong>I like this way of communication</strong> (0 = completely disagree, 100 = completely agree).</p>",
+    require_movement: true
+};
+// per block questions
+var sliders_blocks = [];
+for (var i = 0; i < n_videos * n_videos_per_block / n_break; i++) {  // add qustions for each block
+    if (i == 0) { // first phrase, so from the start of the experiment
+        var legend_phrase = 'since the start of the experiment';
+    } else { // not the first phrase, so since the last break
+        var legend_phrase = 'since the last break';
+    }
+    // id of condition
+    // 0  0 1    0*2 0*2+1
+    // 1  2 3    1*2 1*2+1
+    // 2  4 5    2*2 2*2+1
+    cond_num = i * 2;
+    if (conditions[cond_num] < conditions[cond_num + 1]) { // order smaller -> larger
+        cond_num_1 = cond_num;
+        cond_num_2 = cond_num + 1;
+    } else {
+        cond_num_1 = cond_num + 1;
+        cond_num_2 = cond_num;
+    }
+    // add block to array
+    sliders_blocks.push({
+        type: 'survey-html-form-slider',
+        require_movement: true,
+        html: '<div id="jspsych-content" class="jspsych-content"></p><div id="jspsych-html-slider-response-wrapper" style="margin: 100px 0px;"><div><p style="width: 1000px">Please rate the following statements based on the videos of the car continuing to drive, which were shown ' + legend_phrase + '. Provide your answers by moving the sliders on the scale: 0 = completely disagree, 100 = completely agree. You will not be able to continue before moving all sliders.</p><img src=\"' + condition_images[conditions[cond_num_1] - 1] + '\"/></div><div class="jspsych-html-slider-response-container" style="position:relative; margin: 3em auto 1.5em auto; width:1000px;"><input type="range" value="50" min="0" max="100" step="1" style="width: 100%;" id="slider-0" name="slider-0" size="5"><div><div style="display: inline-block; position: absolute; left:-10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">0</span></div><div style="display: inline-block; position: absolute; left:10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">20</span></div><div style="display: inline-block; position: absolute; left:30%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">40</span></div><div style="display: inline-block; position: absolute; left:50%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">60</span></div><div style="display: inline-block; position: absolute; left:70%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">80</span></div><div style="display: inline-block; position: absolute; left:90%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">100</span></div></div></div><p style="width: 1000px"><strong>This concept was easy to understand</strong>.</p><div class="jspsych-html-slider-response-container" style="position:relative; margin: 3em auto 1.5em auto; width:1000px;"><input type="range" value="50" min="0" max="100" step="1" style="width: 100%;" id="slider-1" name="slider-1"><div><div style="display: inline-block; position: absolute; left:-10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">0</span></div><div style="display: inline-block; position: absolute; left:10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">20</span></div><div style="display: inline-block; position: absolute; left:30%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">40</span></div><div style="display: inline-block; position: absolute; left:50%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">60</span></div><div style="display: inline-block; position: absolute; left:70%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">80</span></div><div style="display: inline-block; position: absolute; left:90%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">100</span></div></div></div><p style="width: 1000px"><strong>I like this concept as a way of communication</strong>.</p><div class="jspsych-html-slider-response-container" style="position:relative; margin: 3em auto 1.5em auto; width:1000px;"><input type="range" value="50" min="0" max="100" step="1" style="width: 100%;" id="slider-2" name="slider-2"><div><div style="display: inline-block; position: absolute; left:-10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">0</span></div><div style="display: inline-block; position: absolute; left:10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">20</span></div><div style="display: inline-block; position: absolute; left:30%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">40</span></div><div style="display: inline-block; position: absolute; left:50%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">60</span></div><div style="display: inline-block; position: absolute; left:70%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">80</span></div><div style="display: inline-block; position: absolute; left:90%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">100</span></div></div></div><p style="width: 1000px"><strong>The concept is intuitive for signaling \'Please do NOT cross the road\'</strong>.</p><div id="jspsych-html-slider-response-wrapper" style="margin: 100px 0px;"><div><p style="width: 1000px">Please rate the following statements based on the videos of the car letting you cross the street, which were shown ' + legend_phrase + '. Provide your answers by moving the sliders on the scale: 0 = completely disagree, 100 = completely agree. You will not be able to continue before moving all sliders.</p><img src=\"' + condition_images[conditions[cond_num_2] - 1] + '\"/></div><div class="jspsych-html-slider-response-container" style="position:relative; margin: 3em auto 1.5em auto; width:1000px;"><input type="range" value="50" min="0" max="100" step="1" style="width: 100%;" id="slider-3" name="slider-3"><div><div style="display: inline-block; position: absolute; left:-10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">0</span></div><div style="display: inline-block; position: absolute; left:10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">20</span></div><div style="display: inline-block; position: absolute; left:30%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">40</span></div><div style="display: inline-block; position: absolute; left:50%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">60</span></div><div style="display: inline-block; position: absolute; left:70%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">80</span></div><div style="display: inline-block; position: absolute; left:90%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">100</span></div></div></div><p style="width: 1000px"><strong>This concept was easy to understand</strong>.</p><div class="jspsych-html-slider-response-container" style="position:relative; margin: 3em auto 1.5em auto; width:1000px;"><input type="range" value="50" min="0" max="100" step="1" style="width: 100%;" id="slider-4" name="slider-4"><div><div style="display: inline-block; position: absolute; left:-10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">0</span></div><div style="display: inline-block; position: absolute; left:10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">20</span></div><div style="display: inline-block; position: absolute; left:30%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">40</span></div><div style="display: inline-block; position: absolute; left:50%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">60</span></div><div style="display: inline-block; position: absolute; left:70%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">80</span></div><div style="display: inline-block; position: absolute; left:90%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">100</span></div></div></div><p style="width: 1000px"><strong>I like this concept as a way of communication</strong>.</p><div class="jspsych-html-slider-response-container" style="position:relative; margin: 3em auto 1.5em auto; width:1000px;"><input type="range" value="50" min="0" max="100" step="1" style="width: 100%;" id="slider-5" name="slider-5"><div><div style="display: inline-block; position: absolute; left:-10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">0</span></div><div style="display: inline-block; position: absolute; left:10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">20</span></div><div style="display: inline-block; position: absolute; left:30%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">40</span></div><div style="display: inline-block; position: absolute; left:50%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">60</span></div><div style="display: inline-block; position: absolute; left:70%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">80</span></div><div style="display: inline-block; position: absolute; left:90%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">100</span></div></div></div><p style="width: 1000px"><strong>The concept is intuitive for signaling \'Please cross the road\'</strong>.</p><div></div>',
+        items: 6
+    });
+}
+
+// videos with examples
+var video_example_1 = {
+    type: 'video-keyboard-response',
+    trial_ends_after_video: true,
+    choices: jsPsych.NO_KEYS,
+    sources: [video_pfefix + 'example_1.mp4'],
+    prompt: '<p>Watch this video with an example of a communication feature.</p>',
+};
+var video_example_2 = {
+    type: 'video-keyboard-response',
+    trial_ends_after_video: true,
+    choices: jsPsych.NO_KEYS,
+    sources: [video_pfefix + 'example_2.mp4'],
+    prompt: '<p>Watch this video with an example of a communication feature.</p>',
+};
+var str_yield = 'Car letting you cross';
+var str_continue = 'Car continuing to drive';
+var questions_end = {
+  type: 'survey-html-form-ranking',
+  preamble: '<p>Please rank the ways of communicating you have just seen. Only numbers between 1 and 6 are accepted. <strong>Do NOT put the same number more than once in the same row. Only inputting unique values will allow you to continue.</strong></p>',
+  html: '<table id="questionnaire"><thead id="questionnaire-thead"><tr><th></th><th><img src=\'' + image_pfefix + 'colour_continue.png\'/></th><th><img src=\'' + image_pfefix + 'gesture_continue.png\'/></th><th><img src=\'' + image_pfefix + 'implicit_continue.png\'/></th><th><img src=\'' + image_pfefix + 'lightbar_continue.png\'/></th><th><img src=\'' + image_pfefix + 'posture_continue.png\'/></th><th><img src=\'' + image_pfefix + 'text_continue.png\'/></th></tr><tr><th></th><th><p>' + str_continue + '</p></th><th><p>' + str_continue + '</p></th><th><p>' + str_continue + '</p></th><th><p>' + str_continue + '</p></th><th><p>' + str_continue + '</p></th><th><p>' + str_continue + '</p></th></tr><tr><th></th><th><img src=\'' + image_pfefix + 'colour.png\'/></th><th><img src=\'' + image_pfefix + 'gesture.png\'/></th><th><img src=\'' + image_pfefix + 'implicit.png\'/></th><th><img src=\'' + image_pfefix + 'lightbar.png\'/></th><th><img src=\'' + image_pfefix + 'posture.png\'/></th><th><img src=\'' + image_pfefix + 'text.png\'/></th></tr><tr><th></th><th><p>' + str_yield + '</p></th><th><p>' + str_yield + '</p></th><th><p>' + str_yield + '</p></th><th><p>' + str_yield + '</p></th><th><p>' + str_yield + '</p></th><th><p>' + str_yield + '</p></th></tr></thead><tbody><tr><td><strong>Clarity</strong><br>(from 1 = most clear to 6 = least clear)<p></p></td><td><input id="ranking-input-0-0" name="ranking-input-0-0" type="number" min="1" max="6" step="1"/></td><td><input id="ranking-input-0-1" name="ranking-input-0-1" type="number" min="1" max="6" step="1" required /></td><td><input id="ranking-input-0-2" name="ranking-input-0-2" type="number" min="1" max="6" step="1" required /></td><td><input id="ranking-input-0-3" name="ranking-input-0-3" type="number" min="1" max="6" step="1" required /></td><td><input id="ranking-input-0-4" name="ranking-input-0-4" type="number" min="1" max="6" step="1" required /></td><td><input id="ranking-input-0-5" name="ranking-input-0-5" type="number" min="1" max="6" step="1" required /></td></tr><tr><td><strong>Personal preference</strong><br>(from 1 = most preferred to 6 = least preferred)</td><td><input id="ranking-input-1-0" name="ranking-input-1-0" type="number" min="1" max="6" step="1" required /></td><td><input id="ranking-input-1-1" name="ranking-input-1-1" type="number" min="1" max="6" step="1" required /></td><td><input id="ranking-input-1-2" name="ranking-input-1-2" type="number" min="1" max="6" step="1" required /></td><td><input id="ranking-input-1-3" name="ranking-input-1-3" type="number" min="1" max="6" step="1" required /></td><td><input id="ranking-input-1-4" name="ranking-input-1-4" type="number" min="1" max="6" step="1" required /></td><td><input id="ranking-input-1-5" name="ranking-input-1-5" type="number" min="1" max="6" step="1" required /></td></tr></tbody></table>',
+  unique_values: true,
+  rows: 2,
+  items_per_row: 6
+};
+// block for sending data
+var save_data_block = {
+    type: 'call-function',
+    func: function() {
+        $.ajax({
+                type: 'POST',
+                url: '/experiment-data',
+                data: jsPsych.data.get().json(),
+                contentType: 'application/json'
+            })
+            .done(function() {
+                jsPsych.data.reset();
+            })
+            .fail(function() {
+                alert('A problem occurred while writing to the database. Please contact the researcher for more information.')
+                window.location.href = '/';
+            })
+    }
+}
+// create experiment timeline array
+var timeline = [];
+timeline.push(instructions_block);
+timeline.push(video_example_1);
+timeline.push(video_example_2);
+// iterate over blocks
+for (var i = 0; i < n_videos * n_repeat / n_videos_per_block; i++) {
+    // iterate over videos per block
+    for (var j = 0; j < n_videos_per_block; j++) {
+    	// if (j != 0) {  // add the continue page before all videos except for the 1st one
+	    // 	timeline.push(continue_block);
+	    // }
+	    timeline.push(continue_block);
+        timeline.push(image_block);  // page with an image asking to press the key
+        timeline.push(video_stimuli[i * n_videos_per_block + j]);  // page with the stimulus
+    }
+    // questions after each block with stimuli
+    if (i % 2 == 1) {
+	    // timeline.push(slider_block_1);
+	    // timeline.push(slider_block_2);
+	    // timeline.push(sliders_block);
+        timeline.push(sliders_blocks[Math.floor(i / 2)]);
+	}
+	// add final questionnaire
+	if (i == 11) {
+		timeline.push(questions_end);
+	}
+    // save data
+    timeline.push(save_data_block);
+    // don't add the between block after the last trial
+    if (i != 11 && i % 2 == 1) {
+	    timeline.push(between_blocks[i]);
+	}
+}
+/* Start the experiment */
+jsPsych.init({
+	// auto_preload: false,
+    show_preload_progress_bar: true,
+    preload_images: condition_images.concat([image_pfefix + 'black_frame.png']),
+    timeline: timeline,
+    max_load_time: 3000000,
+    on_finish: function() {
+        window.location.href = 'finish?work=' + finish_code;
+    }
+});
+</script>
+</html>
