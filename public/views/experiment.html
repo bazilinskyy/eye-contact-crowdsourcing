@@ -114,17 +114,17 @@ function getRandomInt(min, max) {
 }
 
 /**
- * Get finish code for the worker.
+ * Get code for the worker.
  */
-function getFinishCode() {
+function getWorkerCode() {
     var timestamp = window.performance.timing.navigationStart + window.performance.now();
     var current_time = Math.round(timestamp);
     var random_num = getRandomInt(1, 10000);
-    finish_code = 'E9' + current_time + 'BV' + random_num + '7K';
-    return finish_code;
+    worker_code = 'G9' + current_time + 'TK' + random_num + '6M';
+    return worker_code;
 }
 
-var finish_code = getFinishCode();
+var worker_code = getWorkerCode();
 
 /**
  * Shuffles array in place.
