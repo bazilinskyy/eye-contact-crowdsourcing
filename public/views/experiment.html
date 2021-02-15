@@ -13,6 +13,9 @@
     <link href='jsPsych/css/jspsych.css' rel='stylesheet' type='text/css'></link>
     <link href='css/experiment.css' rel='stylesheet' type='text/css'></link>
     <link rel='icon' type='image/png' href='/img/favicon.png' />
+    <!-- bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
   </head>
   <body>
   </body>
@@ -216,7 +219,7 @@ var video_stimuli = []; // blocks with videos
 // define instructions block
 var instructions_block = {
     type: 'html-keyboard-response',
-    stimulus: '<div class="jumbotron jumbotron-fluid" style="text-align: left;"><div class="container"><h1 class="display-4">Instructions</h1><p class="lead">You will view ' + n_videos_participant * n_images_repeat + ' videos of approaching cars. Some cars will stop and other cars will continue driving. In some videos, the driver will make eye contact with you.</p></>Each video starts with a black screen. As soon as you see the black screen, press and HOLD the key \'F\'.</p><p>Hold the key as long as you feel safe to cross. Release the key if you do not feel safe to cross anymore. You can press and release the key as many times as you want per video.</p><p>Please make sure that your audio is on. On the next page, you will listen to a song. When you will be listening to the song, adjust your volume level to be able to hear the song clearly. Do NOT change your volume level till the end of the experiment.</p><p>The window of your browser should be at least 1300px wide and 800px tall. Press \'C\' to proceed to the first video.</p></div></div>',
+    stimulus: '<div class="jumbotron jumbotron-fluid" style="text-align: left;"><div class="container"><h1 class="display-4">Instructions</h1><p class="lead">You will view ' + n_videos_participant * n_videos_repeat + ' videos of approaching cars. Some cars will stop and other cars will continue driving. In some videos, the driver will make eye contact with you.</p></>Each video starts with a black screen. As soon as you see the black screen, press and HOLD the key \'F\'.</p><p>Hold the key as long as you feel safe to cross. Release the key if you do not feel safe to cross anymore. You can press and release the key as many times as you want per video.</p><p>Please make sure that your audio is on. On the next page, you will listen to a song. When you will be listening to the song, adjust your volume level to be able to hear the song clearly. Do NOT change your volume level till the end of the experiment.</p><p>The window of your browser should be at least 1300px wide and 800px tall. Press \'C\' to proceed to the first video.</p></div></div>',
 
     choices: ['C'],
     data: {
