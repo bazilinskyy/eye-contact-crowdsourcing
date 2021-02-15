@@ -305,7 +305,7 @@ for (var i = 0; i < n_videos_participant * n_repeat; i++) {
     // save data
     timeline.push(save_data_block);
     // don't add the between block after the last trial
-    if (i != n_videos_participant * n_repeat / n_videos_per_block - 1) {
+    if (i != n_videos_participant * n_repeat / n_break - 1) {
         timeline.push(between_blocks[i]);
     }
 }
