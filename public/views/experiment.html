@@ -300,7 +300,7 @@ var between_blocks_count = 0;  // counter of shown between blocks
 timeline.push(instructions_block);
 timeline.push(sound_check_block);  // song for adjusting volume
 // iterate over blocks
-for (var i = 0; i < n_videos_participant * n_repeat; i++) {
+for (var i = 0; i < n_videos * n_repeat; i++) {
     timeline.push(continue_block);
     timeline.push(video_stimuli[i]);  // page with the stimulus
     timeline.push(qs_form);
