@@ -283,7 +283,7 @@ for (var i = 1; i < n_videos * n_repeat / n_videos_break; i++) {
 var qs_form = {
     type: 'survey-html-form',
     preamble: "<p>Please respond to the questions below based on the last video that you have seen.</p>",
-    html: '<div class="form-group"> <label class="q0" for="q0">The driver made eye contact with me</label> <div class="form-check form-check-inline"> <input class="form-check-input" type="radio" name="q0-0" id="q0-0" value="1"> <label class="form-check-label" for="inlineRadio1">Yes</label> </div><div class="form-check form-check-inline"> <input class="form-check-input" type="radio" name="q0-1" id="q0-1" value="0"> <label class="form-check-label" for="inlineRadio2">No</label> </div></div><div class="form-group"> <label class="q1" for="q1">The eye contact was intuitive for understanding whether I could or could not cross the road</label> <input type="range" min="1" max="100" value="50" class="slider" id="q1" name="q1"></div>'
+    html: '<div class="form-group"> <label class="q0" for="q0">The driver made eye contact with me</label> <div class="form-check form-check-inline"> <input class="form-check-input" type="radio" name="q0-0" id="q0-0" value="1" checked> <label class="form-check-label" for="q0-0">Yes</label> </div><div class="form-check form-check-inline"> <input class="form-check-input" type="radio" name="q0-1" id="q0-1" value="0"> <label class="form-check-label" for="q0-1">No</label> </div></div><div class="form-group"> <label class="q1" for="q1">The eye contact was intuitive for understanding whether I could or could not cross the road</label> <input type="range" min="1" max="100" value="50" class="slider" id="q1" name="q1"></div>'
 };
 
 // block for sending data
