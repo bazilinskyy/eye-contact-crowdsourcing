@@ -7,11 +7,8 @@
     <script src='jsPsych/plugins/jspsych-html-keyboard-response.js'></script>
     <script src='jsPsych/plugins/jspsych-video-keyboard-multiple-responses-release.js'></script>
     <script src='jsPsych/plugins/jspsych-call-function.js'></script>
-    <script src='jsPsych/plugins/jspsych-html-slider-response.js'></script>
-    <script src='jsPsych/plugins/jspsych-survey-likert.js'></script>
+    <script src='jsPsych/plugins/jspsych-html-form.js'></script>
     <script src='jsPsych/plugins/jspsych-video-keyboard-response.js'></script>
-    <script src='jsPsych/plugins/jspsych-survey-html-form-ranking.js'></script>
-    <script src='jsPsych/plugins/jspsych-survey-html-form-slider.js'></script>
     <link href='jsPsych/css/jspsych.css' rel='stylesheet' type='text/css'></link>
     <link href='css/experiment.css' rel='stylesheet' type='text/css'></link>
     <link rel='icon' type='image/png' href='/img/favicon.png' />
@@ -38,15 +35,15 @@
 // by Pavlo Bazilinskyy <p.bazilinskyy@tudelft.nl>
 
 // Constants
-var n_videos = 120; // number of videos
-var n_repeat = 1; // number of repeats of each condition
-var n_videos_per_block = 4; // number of videos in each block
-var n_videos_participant = 32; // number of videos for each participant
+var n_videos = 8; // number of videos
+var n_repeat = 5; // number of repeats of each condition
+var n_videos_participant = 40; // number of videos for each participant
 var n_break = 5; // number of videos between each break
 var image_pfefix = 'img/'; // prefix for images
+var sound_prefix = 'sounds/sound_'; // prefix for videos
 var video_pfefix = 'videos/video_'; // prefix for videos
 var SHOW_DEBUG = false; // switch for debugging output
-
+var SAVE_DATA = 1; // save data or not
  /**
  * Returns a random integer between min (inclusive) and max (inclusive).
  * The value is no lower than min (or the next integer greater than min
@@ -108,6 +105,39 @@ var getUrlParameter = function getUrlParameter(sParam) {
     }
 };
 
+/**
+ * Save data.
+ */
+function saveData() {
+    // check if data needs to be saved
+    if (save_data) {
+        // add worker ID 
+        jsPsych.data.get().addToLast({
+            worker_code: worker_code
+        });
+
+        if (debug) {
+            console.log('saving data', jsPsych.data.get().json());
+        }
+        $.ajax({
+                type: 'POST',
+                url: '/experiment-data',
+                data: jsPsych.data.get().json(),
+                contentType: 'application/json'
+            })
+            .done(function() {
+                jsPsych.data.reset();
+            })
+            .fail(function() {
+                alert('A problem occurred while writing to the database. Please contact the researcher for more information.')
+                window.location.href = '/';
+            })
+        if (debug) {
+            console.log('data saved');
+        }
+    }
+}
+
 var debug = getUrlParameter('debug');
 if (!debug) {
     debug = SHOW_DEBUG;
@@ -117,79 +147,43 @@ if (debug) {
     console.log('debug', debug);
 }
 
+var save_data = getUrlParameter('save_data');
+if (!save_data) {
+    save_data = SAVE_DATA;
+}
+
 // Arrays for storing data
-var video_mobil_sunset_ids = [];  // IDs of videos in stimuli for group MOBIL
-var video_mobil_mist_ids = [];  // IDs of videos in stimuli for group MOBIL
-var video_nn_sunset_ids = [];  // IDs of videos in stimuli for group NN
-var video_nn_mist_ids = [];  // IDs of videos in stimuli for group NN
 var between_blocks = []; // instructions between blocks
 var video_stimuli = []; // blocks with videos
 
 // define instructions block
 var instructions_block = {
     type: 'html-keyboard-response',
-    stimulus: '<div style="float: left; text-align: left"><p>You will watch ' + n_videos_participant + ' 1-minute long videos of an automated vehicle driving on a highway in various weather conditions. The vehicle is always in automated mode and will either change lanes (left/right) or stay in the lane. The speed limit is 120 km/h. The left lane should only be used for overtaking. Please try to imagine as if you are an occupant during a normal ride in the vehicle.</p><ol><li>During each video press the key \'F\' whenever you feel the car changes lanes when it should not change lanes, or when it does not change lanes when it should change lanes.</li><li>You can press the key as many times as you want per video.</li></ol><p>The window of your browser should be at least 1300px wide and 800px tall. Press \'C\' to proceed to the first video.</p></div>',
+    stimulus: '<div style="float: left; text-align: left"><p>You will watch ' + n_videos_participant + ' videos of approaching cars. Some cars will stop and other cars will continue driving. In some videos, the driver will make eye contact with you.</p></>Each video starts with a black screen. As soon as you see the black screen, press and HOLD the key \'F\'.</p><p>Hold the key as long as you feel safe to cross. Release the key if you do not feel safe to cross anymore. You can press and release the key as many times as you want per video.</p><p>Please make sure that your audio is on. On the next page, you will listen to a song. When you will be listening to the song, adjust your volume level to be able to hear the song clearly. Do NOT change your volume level till the end of the experiment.</p><p>The window of your browser should be at least 1300px wide and 800px tall. Press \'C\' to proceed to the first video.</p></div>',
     choices: ['C'],
 };
+// page with instructions for the sound check during blocks
+var sound_check_instructions = {
+    type: 'html-keyboard-response',
+    stimulus: '<p>On the next page, you will listen to a phrase spoken in English. Listen to it carefully. After the end of the phrase, a new page will load automatically. Press \'C\' to proceed.</p>',
+    choices: ['C']
+};
+// block with sound to adjust sound level
+var sound_check_block = {
+    type: 'audio-keyboard-response',
+    stimulus: [sound_prefix + 'test_1.wav'],
+    choices: ['C'];
+    trial_ends_after_audio: false,
+    prompt: '<p>Listen carefully to the song. Adjust your volume level to be able to  hear the song clearly. Do NOT change your volume level till the end of the experiment. After adjusting your volume level, press \'C\' to proceed.</p>';
+};
 // populate array with video IDs for group MOBIL - sunset
-for (var i = 1; i <= n_videos/4; i++) {
+for (var i = 0; i < n_videos; i++) {
     for (var j = 0; j < n_repeat; j++) {
-        video_mobil_sunset_ids.push(i);
-    }
-}
-// populate array with video IDs for group MOBIL - mist
-for (var i = n_videos/4; i <= n_videos/2; i++) {
-    for (var j = 0; j < n_repeat; j++) {
-        video_mobil_mist_ids.push(i);
-    }
-}
-// populate array with video IDs for group NN - sunset
-for (var i = n_videos/2; i <= n_videos/2 + n_videos/4; i++) {
-    for (var j = 0; j < n_repeat; j++) {
-        video_nn_sunset_ids.push(i);
-    }
-}
-// populate array with video IDs for group NN - mist
-for (var i = n_videos/2 + n_videos/4; i <= n_videos; i++) {
-    for (var j = 0; j < n_repeat; j++) {
-        video_nn_mist_ids.push(i);
+        video_ids.push(i);
     }
 }
 
 // shuffle ids
-video_mobil_sunset_ids = shuffle(video_mobil_sunset_ids);
-video_mobil_mist_ids = shuffle(video_mobil_mist_ids);
-video_nn_sunset_ids = shuffle(video_nn_sunset_ids);
-video_nn_mist_ids = shuffle(video_nn_mist_ids);
-
-// shuffle array with video IDs
-var video_ids_blocks = [];  // all groups shuffled
-var video_ids_1 = video_mobil_sunset_ids.slice(0, n_videos_participant / 4) ;  // group 1
-var video_ids_2 = video_mobil_mist_ids.slice(0, n_videos_participant / 4) ;  // group 2
-var video_ids_3 = video_nn_sunset_ids.slice(0, n_videos_participant / 4) ;  // group 3
-var video_ids_4 = video_nn_mist_ids.slice(0, n_videos_participant / 4) ;  // group 4
-
-// randomse order of sunset-mist
-random_num = getRandomInt(1, 2);
-if (random_num == 1) {
-   video_ids_blocks.push(video_ids_1);
-   video_ids_blocks.push(video_ids_2); 
-} else {
-   video_ids_blocks.push(video_ids_2);
-   video_ids_blocks.push(video_ids_1); 
-}
-random_num = getRandomInt(1, 2);
-if (random_num == 1) {
-   video_ids_blocks.push(video_ids_3); 
-   video_ids_blocks.push(video_ids_4); 
-} else {
-   video_ids_blocks.push(video_ids_4);
-   video_ids_blocks.push(video_ids_3); 
-}
-
-video_ids = video_ids_blocks[0].concat(video_ids_blocks[1], video_ids_blocks[2], video_ids_blocks[3]);
-
-// shuffle all videos
 video_ids = shuffle(video_ids);
 
 // build array with videos with stimuli
@@ -202,7 +196,7 @@ for (var i = 0; i < n_videos_participant; i++) {
         height: 720,
         choices: ['F'],
         sources: [video_pfefix + video_ids[i] + '.mp4'],
-        prompt: '<p>Press the key \'F\' whenever you feel the car changes lanes when it should not, or when it does not change lanes when it should.</p>',
+        prompt: '<p>Press and HOLD \'F\' when you feel safe to cross.</p>',
         on_finish: function(data) {
             jsPsych.data.addDataToLastTrial({
                 worker_code: finish_code
@@ -226,63 +220,34 @@ for (var i = 1; i <= n_videos_participant * n_repeat / n_videos_per_block - 1; i
     });
 }
 
-// likert scale questions
-var scale_likert = [
-    "Disagree strongly", 
-    "Disagree a little", 
-    "Neither agree nor disagree", 
-    "Agree a little", 
-    "Agree strongly"
-];
-
-/* randomise list and pick the first 40 */
-var likert_block = {
-    type: 'survey-likert',
+// questions after each stimulus
+var qs_form = {
+    type: 'survey-html-form',
     preamble: "<p>Please respond to the questions below based on the last video that you have seen.</p>",
-    randomize_question_order: true,
-    questions: [
-      {prompt: "The vehicle’s driving behavior is efficient.", labels: scale_likert, required: true},
-      {prompt: "The vehicle’s driving behavior is safe.", labels: scale_likert, required: true},
-      {prompt: "The vehicle’s driving behavior is human-like.", labels: scale_likert, required: true},
-      {prompt: "The vehicle’s driving behavior is reliable.", labels: scale_likert, required: true},
-      // {prompt: "I would use this automated driving system.", labels: scale_likert, required: true}
-    ]
+    html: '<div class="form-group"> <label class="q0" for="q0">The driver made eye contact with me</label> <div class="form-check form-check-inline"> <input class="form-check-input" type="radio" name="q0-0" id="q0-0" value="1"> <label class="form-check-label" for="inlineRadio1">Yes</label> </div><div class="form-check form-check-inline"> <input class="form-check-input" type="radio" name="q0-1" id="q0-1" value="0"> <label class="form-check-label" for="inlineRadio2">No</label> </div></div><div class="form-group"> <label class="q1" for="q1">The eye contact was intuitive for understanding whether I could or could not cross the road</label> <input type="range" min="1" max="100" value="50" class="slider" id="q1" name="q1"></div>'
 };
 
 // block for sending data
 var save_data_block = {
     type: 'call-function',
     func: function() {
-        $.ajax({
-                type: 'POST',
-                url: '/experiment-data',
-                data: jsPsych.data.get().json(),
-                contentType: 'application/json'
-            })
-            .done(function() {
-                jsPsych.data.reset();
-            })
-            .fail(function() {
-                alert('A problem occurred while writing to the database. Please contact the researcher for more information.')
-                window.location.href = '/';
-            })
+        saveData(); // save data
     }
 }
+
 // create experiment timeline array
 var timeline = [];
 timeline.push(instructions_block);
+timeline.push(sound_check_block);  // song for adjusting volume
 // iterate over blocks
-for (var i = 0; i < n_videos_participant * n_repeat / n_videos_per_block; i++) {
-    // iterate over videos per block
-    for (var j = 0; j < n_videos_per_block; j++) {
-        timeline.push(continue_block);
-        timeline.push(video_stimuli[i * n_videos_per_block + j]);  // page with the stimulus
-        timeline.push(likert_block);
-        // save data
-        timeline.push(save_data_block);
-    }
+for (var i = 0; i < n_videos_participant * n_repeat; i++) {
+    timeline.push(continue_block);
+    timeline.push(video_stimuli[i * n_videos_per_block + j]);  // page with the stimulus
+    timeline.push(qs_form);
+    // save data
+    timeline.push(save_data_block);
     // // questionnaire
-    // timeline.push(likert_block);
+    // timeline.push(qs_form);
     // save data
     // timeline.push(save_data_block);
     // don't add the between block after the last trial
@@ -293,13 +258,9 @@ for (var i = 0; i < n_videos_participant * n_repeat / n_videos_per_block; i++) {
 
 if (debug) {
     console.log('timeline', timeline);
-    console.log('video_ids_blocks[0]', video_ids_blocks[0]);
-    console.log('video_ids_blocks[1]', video_ids_blocks[1]);
-    console.log('video_ids_blocks[2]', video_ids_blocks[2]);
-    console.log('video_ids_blocks[3]', video_ids_blocks[3]);
     console.log('video_ids', video_ids);
     console.log('video_stimuli', video_stimuli);
-    console.log('likert_block', likert_block);
+    console.log('qs_form', qs_form);
     console.log('between_blocks', between_blocks);
 }
 
