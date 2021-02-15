@@ -270,7 +270,7 @@ var continue_block = {
 };
 // build between blocks
 for (var i = 1; i < n_videos * n_repeat / n_break; i++) {
-    var videos_done = n_videos_per_block * i;
+    var videos_done = n_break * i;
     between_blocks.push({
         type: 'html-keyboard-response',
         stimulus: '<p>You have now completed ' + videos_done + ' videos out of ' + n_videos_participant + '. When ready press \'C\' to proceed to the next batch.</p>',
