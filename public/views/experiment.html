@@ -303,10 +303,12 @@ var counter_injections = 0;
 for (var i = 1; i <= video_ids.length; i++) {
     // array with questions
     var questions = [];
+    var question_to_inject = 'na';
     if (questions_inject_locations.includes(i)) {  // add injected question
+        question_to_inject = questions_inject[counter_injections];
         questions = [{prompt: "A driver was visible in the car.", name: 'driver', labels: scale_yn, required: true},
                      {prompt: "From eye contact, was it clear to you if you could or could not cross the road?", name: 'clear', labels: scale_likert, required: true},
-                     {prompt: questions_inject[counter_injections], name: 'injection', labels: scale_yn, required: true}
+                     {prompt: question_to_inject, name: 'injection', labels: scale_yn, required: true}
                     ]
         counter_injections++;  // increment number of injections used
     } else { // don't add injected question
@@ -320,7 +322,7 @@ for (var i = 1; i <= video_ids.length; i++) {
         questions: questions,
         preamble: 'Answer the questions below based on the video you just viewed',
         randomize_question_order: true,
-        data: {injection_q: questions_inject[counter_injections]}
+        data: {injection_q: question_to_inject}
     });
 }
 
