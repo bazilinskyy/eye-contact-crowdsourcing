@@ -297,7 +297,7 @@ var scale_likert = [
 
 // add likert questions
 questions_inject = shuffle(questions_inject);  // shuffle injecction questions
-questions_inject_locations = shuffle(video_ids); // assign image ids and shuffle
+questions_inject_locations = shuffle(Array.from({length: n_videos * n_videos_repeat}, (_, index) => index + 1)); // assign videos ids and shuffle
 questions_inject_locations = questions_inject_locations.slice(0, questions_inject.length); // trim to the number of injections
 var counter_injections = 0;
 for (var i = 1; i <= video_ids.length; i++) {
@@ -401,6 +401,8 @@ if (debug) {
     console.log('video_stimuli', video_stimuli);
     console.log('likert_blocks', likert_blocks);
     console.log('between_blocks', between_blocks);
+    console.log('questions_inject', questions_inject);
+    console.log('questions_inject_locations', questions_inject_locations);
 }
 
 /* Start the experiment */
