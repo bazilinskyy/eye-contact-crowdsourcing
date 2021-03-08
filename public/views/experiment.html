@@ -44,7 +44,8 @@ var br_full_version = '' + parseFloat(navigator.appVersion);
 var br_major_version = parseInt(navigator.appVersion, 10);
 var nameOffset, verOffset, ix;
 var questions_inject = ['2+2=5.', 'Bananas are yellow.', 'Oranges are orange.', '4+3=9.', 'Current year is 2013.', 'Earth is round.', 'France is in Europe.', '3+2=5.', 'Tomatoes are red.', 'Water is wet.']; // test questions to inject
-
+var questions_inject_locations = [];
+var likert_blocks = [];
 
 // In Opera, the true version is after "Opera" or after "Version"
 if ((verOffset = nAgt.indexOf("Opera")) != -1) {
