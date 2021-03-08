@@ -279,7 +279,7 @@ for (var i = 1; i < n_videos * n_videos_repeat / n_videos_break; i++) {
     });
 }
 
-// scale with Truth/False
+// scale with Yes/No
 var scale_yn = [
   "Yes", 
   "No", 
@@ -297,7 +297,7 @@ var scale_likert = [
 
 // add likert questions
 questions_inject = shuffle(questions_inject);  // shuffle injecction questions
-questions_inject_locations = shuffle(Array.from({length: n_videos * n_videos_repeat}, (_, index) => index + 1)); // assign videos ids and shuffle
+questions_inject_locations = shuffle(Array.from({length: n_videos * n_videos_repeat}, (_, index) => index + 1)); // assign video ids and shuffle
 questions_inject_locations = questions_inject_locations.slice(0, questions_inject.length); // trim to the number of injections
 var counter_injections = 0;
 for (var i = 1; i <= video_ids.length; i++) {
@@ -326,20 +326,11 @@ for (var i = 1; i <= video_ids.length; i++) {
     });
 }
 
-// scale with Truth/False
+// scale with essential
 var scale_essential = [
   "Not at all", 
   "No", 
   "Essential"
-];
-
-// Likert
-var scale_likert = [
-  "Completely disagree", 
-  "Disagree",
-  "Neither disagree nor agree",
-  "Agree",
-  "Completely agree" 
 ];
 
 questions_end = [{prompt: "Is eye contact between drivers and pedestrians important for road safety?", name: 'importance', labels: scale_essential, required: true},
