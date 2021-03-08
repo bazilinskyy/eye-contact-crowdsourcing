@@ -43,6 +43,8 @@ var br_name = navigator.appName;
 var br_full_version = '' + parseFloat(navigator.appVersion);
 var br_major_version = parseInt(navigator.appVersion, 10);
 var nameOffset, verOffset, ix;
+var questions_inject = ['2+2=5.', 'Bananas are yellow.', 'Oranges are orange.', '4+3=9.', 'Current year is 2013.', 'Earth is round.', 'France is in Europe.', '3+2=5.', 'Tomatoes are red.', 'Water is wet.']; // test questions to inject
+
 
 // In Opera, the true version is after "Opera" or after "Version"
 if ((verOffset = nAgt.indexOf("Opera")) != -1) {
@@ -237,7 +239,7 @@ var sound_check_block = {
     trial_ends_after_audio: false,
     prompt: '<div class="alert alert-primary" role="alert" style="text-align: left;"><h4 class="alert-heading">Volume adjustment</h4><p>Listen carefully to the song. Adjust your volume level to be able to  hear the song clearly.</p><p><span style="color:red">Do NOT change your volume level till the end of the experiment.</span></p><hr><p class="mb-0">After adjusting your volume level, press \'C\' to proceed.</p></div>'
 };
-// populate array with video IDs for group MOBIL - sunset
+// populate array with video IDs
 for (var i = 0; i < n_videos; i++) {
     for (var j = 0; j < n_videos_repeat; j++) {
         video_ids.push(i);
@@ -276,12 +278,60 @@ for (var i = 1; i < n_videos * n_videos_repeat / n_videos_break; i++) {
     });
 }
 
-// questions after each stimulus
-var qs_form = {
-    type: 'survey-html-form-slider',
-    require_movement: true,
-    html: '<div id="jspsych-content" class="jspsych-content"><div id="jspsych-html-slider-response-wrapper" style="margin: 0px 0px;"><p style="width: 1000px">Please rate the following statements based on the video you just saw. Provide your answers by moving the sliders. You will not be able to continue before moving all sliders.</p></div><div class="jspsych-html-slider-response-container" style="position:relative; margin: 3em auto 1.5em auto; width:1000px;"><input type="range" value="50" min="0" max="100" step="1" style="width: 100%;" id="slider-0" name="slider-0"><div><div style="display: inline-block; position: absolute; left:-10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">0</span></div><div style="display: inline-block; position: absolute; left:10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">20</span></div><div style="display: inline-block; position: absolute; left:30%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">40</span></div><div style="display: inline-block; position: absolute; left:50%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">60</span></div><div style="display: inline-block; position: absolute; left:70%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">80</span></div><div style="display: inline-block; position: absolute; left:90%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">100</span></div></div></div><p style="width: 1000px"><strong>The driver made eye contact with me (0 = completely disagree, 100 = completely agree)</strong>.</p><div class="jspsych-html-slider-response-container" style="position:relative; margin: 3em auto 1.5em auto; width:1000px;"><input type="range" value="50" min="0" max="100" step="1" style="width: 100%;" id="slider-1" name="slider-1"><div><div style="display: inline-block; position: absolute; left:-10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">0</span></div><div style="display: inline-block; position: absolute; left:10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">20</span></div><div style="display: inline-block; position: absolute; left:30%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">40</span></div><div style="display: inline-block; position: absolute; left:50%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">60</span></div><div style="display: inline-block; position: absolute; left:70%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">80</span></div><div style="display: inline-block; position: absolute; left:90%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">100</span></div></div></div><p style="width: 1000px"><strong>The eye contact was intuitive for understanding whether I could or could not cross the road (0 = completely disagree, 100 = completely agree)</strong>.</p></div><div class="jspsych-html-slider-response-container" style="position:relative; margin: 3em auto 1.5em auto; width:1000px;"><input type="range" value="50" min="0" max="100" step="1" style="width: 100%;" id="slider-2" name="slider-2"><div><div style="display: inline-block; position: absolute; left:-10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">0</span></div><div style="display: inline-block; position: absolute; left:10%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">20</span></div><div style="display: inline-block; position: absolute; left:30%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">40</span></div><div style="display: inline-block; position: absolute; left:50%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">60</span></div><div style="display: inline-block; position: absolute; left:70%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">8</span></div><div style="display: inline-block; position: absolute; left:90%; text-align: center; width: 20%;"><span style="text-align: center; font-size: 80%;">100</span></div></div></div><p style="width: 1000px"><strong>The driver engaged in the eye contact at the right moment for me to understand whether I could or could not cross the road (0 = completely disagree, 100 = completely agree)</strong>.</p>',
-    items: 3
+// scale with Truth/False
+var scale_yn = [
+  "Yes", 
+  "No", 
+  "I don't know"
+];
+
+// Likert
+var scale_likert = [
+  "Completely disagree", 
+  "Disagree",
+  "Neither disagree nor agree",
+  "Agree",
+  "Completely agree" 
+];
+
+// add likert questions
+questions_inject = shuffle(questions_inject);  // shuffle injecction questions
+questions_inject_locations = shuffle(video_ids); // assign image ids and shuffle
+questions_inject_locations = questions_inject_locations.slice(0, questions_inject.length); // trim to the number of injections
+var counter_injections = 0;
+for (var i = 1; i <= image_ids.length; i++) {
+    // array with questions
+    var questions = [];
+    if (questions_inject_locations.includes(i)) {  // add injected question
+        questions = [{prompt: "A driver was visible in the car.", name: 'driver', labels: scale_yn, required: true},
+                     {prompt: "From eye contact, was it clear to you if you could or could not cross the road?", name: 'clear', labels: scale_likert, required: true},
+                     {prompt: questions_inject[counter_injections], name: 'injection', labels: scale_yn, required: true}
+                    ]
+        counter_injections++;  // increment number of injections used
+    } else { // don't add injected question
+        questions = [{prompt: "A driver was visible in the car.", name: 'driver', labels: scale_yn, required: true},
+                     {prompt: "From eye contact, was it clear to you if you could or could not cross the road?", name: 'clear', labels: scale_likert, required: true}
+                    ]
+    }
+    // build page with questions
+    likert_blocks.push({
+        type: 'survey-likert',
+        questions: questions,
+        preamble: 'Answer the questions below based on the video you just viewed',
+        randomize_question_order: true
+    });
+}
+
+questions_end = [{prompt: "Is eye contact between drivers and pedestrians important for road safety?", name: 'driver', labels: scale_yn, required: true},
+                 {prompt: "From eye contact, was it clear to you if you could or could not cross the road?", name: 'clear', labels: scale_likert, required: true}
+                ]
+
+// build page with questions
+var qs_end = {
+    type: 'survey-likert',
+    questions: questions_end,
+    preamble: 'Answer the questions below based on all videos that you have viewed',
+    randomize_question_order: true
 };
 
 // block for sending data
@@ -298,10 +348,11 @@ var between_blocks_count = 0;  // counter of shown between blocks
 timeline.push(instructions_block);
 timeline.push(sound_check_block);  // song for adjusting volume
 // iterate over blocks
-for (var i = 0; i < n_videos * n_videos_repeat; i++) {
+for (var i = 0; i < n_videos_ * n_videos_repeat; i++) {
     timeline.push(continue_block);
     timeline.push(video_stimuli[i]);  // page with the stimulus
-    timeline.push(qs_form);
+    // questions
+    timeline.push(likert_blocks[i]);
     // save data
     timeline.push(save_data_block);
     // don't add the between block after the last trial
@@ -313,12 +364,16 @@ for (var i = 0; i < n_videos * n_videos_repeat; i++) {
         between_blocks_count++;
     } 
 }
+// questions in the end
+timeline.push(qs_end);
+// save data
+timeline.push(save_data_block);
 
 if (debug) {
     console.log('timeline', timeline);
     console.log('video_ids', video_ids);
     console.log('video_stimuli', video_stimuli);
-    console.log('qs_form', qs_form);
+    console.log('likert_blocks', likert_blocks);
     console.log('between_blocks', between_blocks);
 }
 
@@ -326,7 +381,7 @@ if (debug) {
 jsPsych.init({
     // auto_preload: false,
     show_preload_progress_bar: true,
-    preload_images: [image_pfefix + 'black_frame.png'],
+    // preload_images: [image_pfefix + 'black_frame.png'],
     timeline: timeline,
     max_load_time: 3000000,
     on_finish: function() {
