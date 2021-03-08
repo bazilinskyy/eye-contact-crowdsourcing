@@ -360,6 +360,13 @@ var save_data_block = {
     }
 }
 
+// black with image to be added before each video
+var image_block = {
+    type: 'html-keyboard-response',
+    stimulus: '<img src=\'' + image_pfefix + 'black_frame.png\'/><p>Press and HOLD \'F\' when you feel safe to cross.</p>',
+    choices: ['F'],
+};
+
 // create experiment timeline array
 var timeline = [];
 var between_blocks_count = 0;  // counter of shown between blocks
@@ -368,6 +375,7 @@ timeline.push(sound_check_block);  // song for adjusting volume
 // iterate over blocks
 for (var i = 0; i < n_videos * n_videos_repeat; i++) {
     timeline.push(continue_block);
+    timeline.push(image_block);  // page with an image asking to press the key
     timeline.push(video_stimuli[i]);  // page with the stimulus
     // questions
     timeline.push(likert_blocks[i]);
@@ -399,6 +407,7 @@ if (debug) {
 jsPsych.init({
     // auto_preload: false,
     show_preload_progress_bar: true,
+    preload_images: [image_pfefix + 'black_frame.png'],
     timeline: timeline,
     max_load_time: 3000000,
     on_finish: function() {
