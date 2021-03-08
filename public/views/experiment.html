@@ -319,7 +319,8 @@ for (var i = 1; i <= video_ids.length; i++) {
         type: 'survey-likert',
         questions: questions,
         preamble: 'Answer the questions below based on the video you just viewed',
-        randomize_question_order: true
+        randomize_question_order: true,
+        data: {injection_q: questions_inject[counter_injections]}
     });
 }
 
