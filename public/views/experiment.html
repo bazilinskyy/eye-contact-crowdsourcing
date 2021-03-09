@@ -23,8 +23,8 @@
 // by Pavlo Bazilinskyy <p.bazilinskyy@tudelft.nl>
 
 // Constants
-var n_videos = 8; // number of videos
-var n_videos_repeat = 5; // number of repeats of each condition
+var n_videos = 13; // number of videos
+var n_videos_repeat = 2; // number of repeats of each condition
 var n_videos_break = 10; // number of videos between each break
 var image_pfefix = 'img/'; // prefix for images
 var sound_prefix = 'sounds/sound_'; // prefix for videos
@@ -43,9 +43,6 @@ var br_name = navigator.appName;
 var br_full_version = '' + parseFloat(navigator.appVersion);
 var br_major_version = parseInt(navigator.appVersion, 10);
 var nameOffset, verOffset, ix;
-var questions_inject = ['2+2=5.', 'Bananas are yellow.', 'Oranges are orange.', '4+3=9.', 'Current year is 2013.', 'Earth is round.', 'France is in Europe.', '3+2=5.', 'Tomatoes are red.', 'Water is wet.']; // test questions to inject
-var questions_inject_locations = [];
-var likert_blocks = [];
 
 // In Opera, the true version is after "Opera" or after "Version"
 if ((verOffset = nAgt.indexOf("Opera")) != -1) {
@@ -220,7 +217,7 @@ var video_stimuli = []; // blocks with videos
 // define instructions block
 var instructions_block = {
     type: 'html-keyboard-response',
-    stimulus: '<div class="jumbotron jumbotron-fluid" style="text-align: left;"><div class="container"><h1 class="display-4">Instructions</h1><p class="lead">You will view ' + n_videos * n_videos_repeat + ' videos of approaching cars. Some cars will stop and other cars will continue driving. In some videos, the driver will make eye contact with you.</p><p class="lead">Each video starts with a black screen. As soon as you see the black screen, press and HOLD the key \'F\'.</p><p class="lead">Hold the key as long as you feel safe to cross. Release the key if you do not feel safe to cross anymore. You can press and release the key as many times as you want per video.</p><p class="lead">Please make sure that your audio is on. On the next page, you will listen to a song. When you will be listening to the song, adjust your volume level to be able to hear the song clearly. Do NOT change your volume level till the end of the experiment.</p><p class="lead">The window of your browser should be at least 1300px wide and 800px tall.</p><hr><p>Press \'C\' to proceed to the first practice trial.</p></div></div>',
+    stimulus: '<div class="jumbotron jumbotron-fluid" style="text-align: left;"><div class="container"><h1 class="display-4">Instructions</h1><p class="lead">You will view ' + n_videos * n_videos_repeat + ' videos of approaching cars from the point of view of a pedestrian standing on the side of the road. Some cars will stop and other cars will not stop. In some videos, the driver will make eye contact with you. Imagine that you are the pedestrian and that you want to cross the road.</p><p class="lead">Before the start of each video, you will briefly see a black screen. Please PRESS AND HOLD the \'F\' key on your keyboard during this time. Once the video starts, continue holding the key as long as you feel safe to cross. RELEASE the key if you do not feel safe to cross anymore. You can press, hold and release the key as many times as you want per video.</p><p class="lead">Before the start of the experiment, please make sure that your device’s audio is on. On the next page, you will hear a song. As you listen, adjust your volume level such that you can hear the song clearly.</p><p class="lead">The window of your browser should be at least 1300px wide and 800px tall.</p><hr><p>Press \'C\' to proceed to the first practice trial.</p></div></div>',
 
     choices: ['C'],
     data: {
@@ -260,9 +257,15 @@ for (var i = 0; i < n_videos * n_videos_repeat; i++) {
         height: 720,
         choices: ['F'],
         sources: [video_pfefix + video_ids[i] + '.mp4'],
-        prompt: '<p>Press and HOLD \'F\' when you feel safe to cross.</p>'
+        prompt: '<p>PRESS AND HOLD the \'F\' key when you feel safe to cross. RELEASE the key when you don’t feel safe.</p>'
     });
 }
+// black with image to be added before each video
+var image_block = {
+    type: 'html-keyboard-response',
+    stimulus: '<img src=\'' + image_pfefix + 'black_frame.png\'/><p>PRESS AND HOLD the \'F\' key when you feel safe to cross. RELEASE the key when you don’t feel safe.</p>',
+    choices: ['F'],
+};
 // continue before showing the image
 var continue_block = {
     type: 'html-keyboard-response',
@@ -295,45 +298,22 @@ var scale_likert = [
   "Completely agree" 
 ];
 
-// add likert questions
-questions_inject = shuffle(questions_inject);  // shuffle injecction questions
-questions_inject_locations = shuffle(Array.from({length: n_videos * n_videos_repeat}, (_, index) => index + 1)); // assign video ids and shuffle
-questions_inject_locations = questions_inject_locations.slice(0, questions_inject.length); // trim to the number of injections
-var counter_injections = 0;
-for (var i = 1; i <= video_ids.length; i++) {
-    // array with questions
-    var questions = [];
-    var question_to_inject = 'na';
-    if (questions_inject_locations.includes(i)) {  // add injected question
-        question_to_inject = questions_inject[counter_injections];
-        questions = [{prompt: "A driver was visible in the car.", name: 'driver', labels: scale_yn, required: true},
-                     {prompt: "From eye contact, was it clear to you if you could or could not cross the road?", name: 'clear', labels: scale_likert, required: true},
-                     {prompt: question_to_inject, name: 'injection', labels: scale_yn, required: true}
+// likert questions after video
+questions_video = [{prompt: "Did the driver make eye contact with you?", name: 'eye_contact', labels: scale_yn, required: true},
+                   {prompt: "If you answered ‘Yes’ to the first question, how do you feel about the following?: Eye contact was a clear message to me that I should/should not cross the road", name: 'clear_yes', labels:scale_likert, required: true},
+                     {prompt: "If you answered ‘No’ to the first question, then how do you feel about the following: ‘Eye contact was a clear message to me that I should/should not cross the road’ (1=Completely disagree, 5=Completely agree)", name: 'clear_no', labels:scale_likert, required: true}
                     ]
-        counter_injections++;  // increment number of injections used
-    } else { // don't add injected question
-        questions = [{prompt: "A driver was visible in the car.", name: 'driver', labels: scale_yn, required: true},
-                     {prompt: "From eye contact, was it clear to you if you could or could not cross the road?", name: 'clear', labels: scale_likert, required: true}
-                    ]
-    }
-    // build page with questions
-    likert_blocks.push({
-        type: 'survey-likert',
-        questions: questions,
-        preamble: 'Answer the questions below based on the video you just viewed',
-        randomize_question_order: true,
-        data: {injection_q: question_to_inject}
-    });
-}
 
-// scale with essential
-var scale_essential = [
-  "Not at all", 
-  "No", 
-  "Essential"
-];
+// build page with questions after video
+var qs_video = {
+    type: 'survey-likert',
+    questions: questions_video,
+    preamble: 'Answer the questions below based on all videos that you have viewed',
+    randomize_question_order: false
+};
 
-questions_end = [{prompt: "Is eye contact between drivers and pedestrians important for road safety?", name: 'importance', labels: scale_essential, required: true},
+// build page with questions after experiment
+questions_end = [{prompt: "How do you feel about the following?: Eye contact between drivers and pedestrians is important for road safety", name: 'importance', labels: scale_likert, required: true},
                  {prompt: "I prefer eye contact to no eye contact", name: 'preference', labels: scale_likert, required: true},
                  {prompt: "I could concentrate well during the study", name: 'concentration', labels: scale_likert, required: true},
                 ]
@@ -343,7 +323,7 @@ var qs_end = {
     type: 'survey-likert',
     questions: questions_end,
     preamble: 'Answer the questions below based on all videos that you have viewed',
-    randomize_question_order: true
+    randomize_question_order: false
 };
 
 // block for sending data
@@ -353,13 +333,6 @@ var save_data_block = {
         saveData(); // save data
     }
 }
-
-// black with image to be added before each video
-var image_block = {
-    type: 'html-keyboard-response',
-    stimulus: '<img src=\'' + image_pfefix + 'black_frame.png\'/><p>Press and HOLD \'F\' when you feel safe to cross.</p>',
-    choices: ['F'],
-};
 
 // create experiment timeline array
 var timeline = [];
@@ -372,7 +345,7 @@ for (var i = 0; i < n_videos * n_videos_repeat; i++) {
     timeline.push(image_block);  // page with an image asking to press the key
     timeline.push(video_stimuli[i]);  // page with the stimulus
     // questions
-    timeline.push(likert_blocks[i]);
+    timeline.push(qs_video);
     // save data
     timeline.push(save_data_block);
     // don't add the between block after the last trial
@@ -395,8 +368,6 @@ if (debug) {
     console.log('video_stimuli', video_stimuli);
     console.log('likert_blocks', likert_blocks);
     console.log('between_blocks', between_blocks);
-    console.log('questions_inject', questions_inject);
-    console.log('questions_inject_locations', questions_inject_locations);
 }
 
 /* Start the experiment */
