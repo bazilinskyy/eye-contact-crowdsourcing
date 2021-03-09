@@ -418,6 +418,7 @@ jsPsych.init({
         window.location.href = 'finish?work=' + finish_code;
     },
     on_interaction_data_update: function(data) {
+        console.log(JSON.stringify(data));
         jsPsych.data.get().addToLast({
             interaction: data
         });
