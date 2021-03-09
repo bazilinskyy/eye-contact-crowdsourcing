@@ -34,6 +34,7 @@ var SAVE_DATA = true; // save data or not
 
 // Arrays
 var video_ids = [];
+var interactions = [];
 
 // browser info
 // https://stackoverflow.com/questions/11219582/how-to-detect-my-browser-version-and-operating-system-using-javascript
@@ -174,8 +175,10 @@ function saveData() {
     if (save_data) {
         // add worker ID 
         jsPsych.data.get().addToLast({
-            worker_code: worker_code
+            worker_code: worker_code,
+            interactions: interactions
         });
+        interactions = [];  // reset interactions
 
         if (debug) {
             console.log('saving data', jsPsych.data.get().json());
@@ -419,9 +422,7 @@ jsPsych.init({
     },
     on_interaction_data_update: function(data) {
         console.log(JSON.stringify(data));
-        jsPsych.data.get().addToLast({
-            interaction: data
-        });
+        interactions.push(data)
     }
 });
 </script>
