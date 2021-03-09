@@ -416,6 +416,11 @@ jsPsych.init({
     max_load_time: 3000000,
     on_finish: function() {
         window.location.href = 'finish?work=' + finish_code;
+    },
+    on_interaction_data_update: function(data) {
+        jsPsych.data.get().addToLast({
+            interaction: data
+        });
     }
 });
 </script>
