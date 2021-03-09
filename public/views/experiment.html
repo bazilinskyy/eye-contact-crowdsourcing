@@ -308,12 +308,6 @@ var scale_likert = [
   "Completely agree" 
 ];
 
-// likert questions after video
-questions_video = [{prompt: "Did the driver make eye contact with you?", name: 'eye_contact', labels: scale_yn, required: true},
-                   {prompt: "If you answered ‘Yes’ to the first question, how do you feel about the following?: Eye contact was a clear message to me that I should/should not cross the road", name: 'clear_yes', labels:scale_likert, required: true},
-                     {prompt: "If you answered ‘No’ to the first question, then how do you feel about the following: ‘Eye contact was a clear message to me that I should/should not cross the road’ (1=Completely disagree, 5=Completely agree)", name: 'clear_no', labels:scale_likert, required: true}
-                    ]
-
 // add likert questions
 questions_inject = shuffle(questions_inject);  // shuffle injecction questions
 questions_inject_locations = shuffle(Array.from({length: n_videos * n_videos_repeat}, (_, index) => index + 1)); // assign video ids and shuffle
@@ -323,9 +317,8 @@ for (var i = 1; i <= video_ids.length; i++) {
     // array with questions
     var questions = [];
     var question_to_inject = 'na';
-    questions = [{prompt: "Did the driver make eye contact with you?", name: 'eye_contact', labels: scale_yn_dk, required: true},
-                 {prompt: "If you answered ‘Yes’ to the first question, how do you feel about the following?: Eye contact was a clear message to me that I should/should not cross the road", name: 'clear_yes', labels:scale_likert, required: true},
-                 {prompt: "If you answered ‘No’ to the first question, then how do you feel about the following: ‘Eye contact was a clear message to me that I should/should not cross the road’ (1=Completely disagree, 5=Completely agree)", name: 'clear_no', labels:scale_likert, required: true}
+    questions = [{prompt: "Did the driver make eye contact with you?", name: 'eye_contact', labels: scale_yn, required: true},
+                 {prompt: "The driver's eye-contact behaviour was intuitive for me to decide whether I could or could not cross.", name: 'intuitive', labels:scale_likert, required: true}
                 ]
     if (questions_inject_locations.includes(i)) {  // add injected question
         question_to_inject = questions_inject[counter_injections];
@@ -343,15 +336,6 @@ for (var i = 1; i <= video_ids.length; i++) {
         data: {injection_q: question_to_inject}
     });
 }
-
-// build page with questions after video
-var qs_video = {
-    type: 'survey-likert',
-    questions: questions_video,
-    preamble: 'Answer the questions below based on the video that you have just viewed',
-    randomize_question_order: false,
-    scale_width: 800
-};
 
 // build page with questions after experiment
 questions_end = [{prompt: "How do you feel about the following?: Eye contact between drivers and pedestrians is important for road safety", name: 'importance', labels: scale_likert, required: true},
