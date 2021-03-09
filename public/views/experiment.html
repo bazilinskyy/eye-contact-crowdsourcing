@@ -43,6 +43,9 @@ var br_name = navigator.appName;
 var br_full_version = '' + parseFloat(navigator.appVersion);
 var br_major_version = parseInt(navigator.appVersion, 10);
 var nameOffset, verOffset, ix;
+var questions_inject = ['2+2=5.', 'Bananas are yellow.', 'Oranges are orange.', '4+3=9.', 'Current year is 2013.', 'Earth is round.', 'France is in Europe.', '3+2=5.', 'Tomatoes are red.', 'Water is wet.']; // test questions to inject
+var questions_inject_locations = [];
+var likert_blocks = [];
 
 // In Opera, the true version is after "Opera" or after "Version"
 if ((verOffset = nAgt.indexOf("Opera")) != -1) {
@@ -304,6 +307,39 @@ questions_video = [{prompt: "Did the driver make eye contact with you?", name: '
                      {prompt: "If you answered ‘No’ to the first question, then how do you feel about the following: ‘Eye contact was a clear message to me that I should/should not cross the road’ (1=Completely disagree, 5=Completely agree)", name: 'clear_no', labels:scale_likert, required: true}
                     ]
 
+// add likert questions
+questions_inject = shuffle(questions_inject);  // shuffle injecction questions
+questions_inject_locations = shuffle(Array.from({length: n_videos * n_videos_repeat}, (_, index) => index + 1)); // assign video ids and shuffle
+questions_inject_locations = questions_inject_locations.slice(0, questions_inject.length); // trim to the number of injections
+var counter_injections = 0;
+for (var i = 1; i <= video_ids.length; i++) {
+    // array with questions
+    var questions = [];
+    var question_to_inject = 'na';
+    if (questions_inject_locations.includes(i)) {  // add injected question
+        question_to_inject = questions_inject[counter_injections];
+        questions = [{prompt: "Did the driver make eye contact with you?", name: 'eye_contact', labels: scale_yn, required: true},
+                     {prompt: "If you answered ‘Yes’ to the first question, how do you feel about the following?: Eye contact was a clear message to me that I should/should not cross the road", name: 'clear_yes', labels:scale_likert, required: true},
+                     {prompt: "If you answered ‘No’ to the first question, then how do you feel about the following: ‘Eye contact was a clear message to me that I should/should not cross the road’ (1=Completely disagree, 5=Completely agree)", name: 'clear_no', labels:scale_likert, required: true},
+                     {prompt: question_to_inject, name: 'injection', labels: scale_yn, required: true}
+                    ]
+        counter_injections++;  // increment number of injections used
+    } else { // don't add injected question
+        questions = [{prompt: "Did the driver make eye contact with you?", name: 'eye_contact', labels: scale_yn, required: true},
+                     {prompt: "If you answered ‘Yes’ to the first question, how do you feel about the following?: Eye contact was a clear message to me that I should/should not cross the road", name: 'clear_yes', labels:scale_likert, required: true},
+                     {prompt: "If you answered ‘No’ to the first question, then how do you feel about the following: ‘Eye contact was a clear message to me that I should/should not cross the road’ (1=Completely disagree, 5=Completely agree)", name: 'clear_no', labels:scale_likert, required: true}
+                    ]
+    }
+    // build page with questions
+    likert_blocks.push({
+        type: 'survey-likert',
+        questions: questions,
+        preamble: 'Answer the questions below based on the video you just viewed',
+        randomize_question_order: false,
+        data: {injection_q: question_to_inject}
+    });
+}
+
 // build page with questions after video
 var qs_video = {
     type: 'survey-likert',
@@ -347,7 +383,7 @@ for (var i = 0; i < n_videos * n_videos_repeat; i++) {
     timeline.push(image_block);  // page with an image asking to press the key
     timeline.push(video_stimuli[i]);  // page with the stimulus
     // questions
-    timeline.push(qs_video);
+    timeline.push(likert_blocks[i]);
     // save data
     timeline.push(save_data_block);
     // don't add the between block after the last trial
