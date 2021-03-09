@@ -325,8 +325,7 @@ for (var i = 1; i <= video_ids.length; i++) {
     var question_to_inject = 'na';
     questions = [{prompt: "Did the driver make eye contact with you?", name: 'eye_contact', labels: scale_yn_dk, required: true},
                  {prompt: "If you answered ‘Yes’ to the first question, how do you feel about the following?: Eye contact was a clear message to me that I should/should not cross the road", name: 'clear_yes', labels:scale_likert, required: true},
-                 {prompt: "If you answered ‘No’ to the first question, then how do you feel about the following: ‘Eye contact was a clear message to me that I should/should not cross the road’ (1=Completely disagree, 5=Completely agree)", name: 'clear_no', labels:scale_likert, required: true},
-                 {prompt: question_to_inject, name: 'injection', labels: scale_yn, required: true}
+                 {prompt: "If you answered ‘No’ to the first question, then how do you feel about the following: ‘Eye contact was a clear message to me that I should/should not cross the road’ (1=Completely disagree, 5=Completely agree)", name: 'clear_no', labels:scale_likert, required: true}
                 ]
     if (questions_inject_locations.includes(i)) {  // add injected question
         question_to_inject = questions_inject[counter_injections];
