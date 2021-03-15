@@ -22,9 +22,11 @@
 
 // by Pavlo Bazilinskyy <p.bazilinskyy@tudelft.nl>
 
-$(document).ready(function(){
-  document.body.style.zoom = 1.0
-});
+// windows 10 zoom
+var scale = 'scale(1)';
+document.body.style.webkitTransform =  scale;    // Chrome, Opera, Safari
+document.body.style.msTransform =   scale;       // IE 9
+document.body.style.transform = scale;     // General
 
 // Constants
 var n_videos = 13; // number of videos
