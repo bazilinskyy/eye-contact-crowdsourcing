@@ -23,8 +23,12 @@
 // by Pavlo Bazilinskyy <p.bazilinskyy@tudelft.nl>
 
 // check for windows
-document.querySelector("meta[name=viewport]").setAttribute('content', 'width=device-width, initial-scale='+(1/window.devicePixelRatio));
-
+// document.querySelector("meta[name=viewport]").setAttribute('content', 'width=device-width, initial-scale='+(1/window.devicePixelRatio));
+@media (-webkit-device-pixel-ratio: 1.25) {
+  * {
+    zoom: 0.8;
+  }
+}
 
 // Constants
 var n_videos = 13; // number of videos
