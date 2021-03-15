@@ -100,16 +100,6 @@ if (isNaN(br_major_version)) {
     br_major_version = parseInt(navigator.appVersion, 10);
 }
 
-if (debug) {
-    console.log('browser name', br_name);
-    console.log('browser full version', br_full_version);
-    console.log('browser major version', br_major_version);
-    console.log('browser navigator.appName', navigator.appName);
-    console.log('browser navigator.userAgent', navigator.userAgent);
-    console.log('window width', window_width);
-    console.log('window height', window_height);
-}
-
  /**
  * Returns a random integer between min (inclusive) and max (inclusive).
  * The value is no lower than min (or the next integer greater than min
@@ -213,6 +203,16 @@ if (!debug) {
 
 if (debug) {
     console.log('debug', debug);
+}
+
+if (debug) {
+    console.log('browser name', br_name);
+    console.log('browser full version', br_full_version);
+    console.log('browser major version', br_major_version);
+    console.log('browser navigator.appName', navigator.appName);
+    console.log('browser navigator.userAgent', navigator.userAgent);
+    console.log('window width', window_width);
+    console.log('window height', window_height);
 }
 
 var save_data = getUrlParameter('save_data');
