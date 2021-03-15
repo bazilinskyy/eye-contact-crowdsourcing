@@ -43,6 +43,8 @@ var nAgt = navigator.userAgent;
 var br_name = navigator.appName;
 var br_full_version = '' + parseFloat(navigator.appVersion);
 var br_major_version = parseInt(navigator.appVersion, 10);
+var window_width = $(window).width();
+var window_height = $(window).height();
 var nameOffset, verOffset, ix;
 var questions_inject = ['2+2=5.', 'Bananas are yellow.', 'Oranges are orange.', '4+3=9.', 'The current year is 2013.', 'The earth is round.', 'France is in Europe.', '3+2=5.', 'Tomatoes are red.', '2+4=6.']; // test questions to inject
 var questions_inject_locations = [];
@@ -104,6 +106,8 @@ if (debug) {
     console.log('browser major version', br_major_version);
     console.log('browser navigator.appName', navigator.appName);
     console.log('browser navigator.userAgent', navigator.userAgent);
+    console.log('window width', window_width);
+    console.log('window height', window_height);
 }
 
  /**
@@ -232,7 +236,9 @@ var instructions_block = {
         browser_major_version: br_major_version,
         browser_app_name: navigator.appName,
         browser_user_agent: navigator.userAgent,
-        video_ids: video_ids
+        video_ids: video_ids,
+        window_height: window_height,
+        window_width: window_width
     }
 };
 // block with sound to adjust sound level
