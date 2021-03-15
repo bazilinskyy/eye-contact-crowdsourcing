@@ -22,6 +22,10 @@
 
 // by Pavlo Bazilinskyy <p.bazilinskyy@tudelft.nl>
 
+// check for windows
+document.querySelector("meta[name=viewport]").setAttribute('content', 'width=device-width, initial-scale='+(1/window.devicePixelRatio));
+
+
 // Constants
 var n_videos = 13; // number of videos
 var n_videos_repeat = 2; // number of repeats of each condition
