@@ -5,6 +5,7 @@
     <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
     <script src='jsPsych/jspsych.js'></script>
     <script src='jsPsych/plugins/jspsych-html-keyboard-response.js'></script>
+    <script src='jsPsych/plugins/jspsych-fullscreen.js'></script>
     <script src='jsPsych/plugins/jspsych-video-keyboard-multiple-responses-release.js'></script>
     <script src='jsPsych/plugins/jspsych-call-function.js'></script>
     <script src="jsPsych/plugins/jspsych-survey-likert.js"></script>
@@ -364,6 +365,16 @@ var qs_end = {
     scale_width: 800
 };
 
+timeline.push({
+  type: 'fullscreen',
+  fullscreen_mode: true
+});
+
+var fullscreen_block = {
+    type: 'fullscreen',
+    fullscreen_mode: true
+}
+
 // block for sending data
 var save_data_block = {
     type: 'call-function',
@@ -375,6 +386,7 @@ var save_data_block = {
 // create experiment timeline array
 var timeline = [];
 var between_blocks_count = 0;  // counter of shown between blocks
+timeline.push(fullscreen_block);  // enter fulls screen
 timeline.push(instructions_block);
 timeline.push(sound_check_block);  // song for adjusting volume
 // iterate over blocks
