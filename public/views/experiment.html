@@ -386,9 +386,8 @@ var save_data_block = {
 // create experiment timeline array
 var timeline = [];
 var between_blocks_count = 0;  // counter of shown between blocks
-timeline.push(fullscreen_enter);  // enter fulls screen
-timeline.push(instructions_block);
-timeline.push(fullscreen_exit);  // exit full screen
+timeline.push(fullscreen_enter);  // enter full screen
+timeline.push(instructions_block);  // show instructions
 timeline.push(sound_check_block);  // song for adjusting volume
 // iterate over blocks
 for (var i = 0; i < n_videos * n_videos_repeat; i++) {
