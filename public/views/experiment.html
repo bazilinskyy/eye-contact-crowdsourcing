@@ -391,6 +391,8 @@ var between_blocks_count = 0;  // counter of shown between blocks
 timeline.push(fullscreen_enter);  // enter full screen
 timeline.push(instructions_block);  // show instructions
 timeline.push(sound_check_block);  // song for adjusting volume
+// save data
+timeline.push(save_data_block);
 // iterate over blocks
 for (var i = 0; i < n_videos * n_videos_repeat; i++) {
     timeline.push(continue_block);
