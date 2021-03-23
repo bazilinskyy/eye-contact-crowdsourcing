@@ -324,62 +324,6 @@ class Heroku:
         # return mapping as a dataframe
         return mapping
 
-    def populate_mapping(self, df, points_duration, mapping):
-        """
-        Populate dataframe with mapping of stimuli with counts of detected
-        coords for each stimulus duration.
-        """
-        # todo: add analysis info to mapping matrix. for example mean keypresses
-        logger.info('Populating coordinates in mapping of stimuli')
-        # # read mapping of polygons from a csv file
-        # polygons = pd.read_csv(cs.common.get_configs('vehicles_polygons'))
-        # # set index as stimulus_id
-        # polygons.set_index('image_id', inplace=True)
-        # # loop over stimuli
-        # for stim_id in tqdm(range(1, self.num_stimuli + 1)):
-        #     # polygon of vehicle
-        #     coords = np.array(polygons.at[stim_id, 'coords'].split(','),
-        #                       dtype=int).reshape(-1, 2)
-        #     polygon = Polygon(coords)
-        #     # loop over durations of stimulus
-        #     for duration in range(len(self.durations)):
-        #         # loop over coord in the list of coords
-        #         for point in points_duration[duration][stim_id]:
-        #             # convert to point object
-        #             point = Point(point[0], point[1])
-        #             # check if point is within polygon of vehicle
-        #             if polygon.contains(point):
-        #                 # check if nan is in the cell
-        #                 if pd.isna(mapping.at[stim_id,
-        #                                       self.durations[duration]]):
-        #                     mapping.at[stim_id, self.durations[duration]] = 1
-        #                 # not nan
-        #                 else:
-        #                     mapping.at[stim_id, self.durations[duration]] += 1
-        #         # count number of participants per duration
-        #         name_cell = 'image_' + \
-        #                     str(stim_id) + \
-        #                     '-' + str(self.durations[duration]) + \
-        #                     '-cb'
-        #         count = int(self.heroku_data[name_cell].count())
-        #         mapping.at[stim_id,
-        #                    str(self.durations[duration]) + '_count'] = count
-        #     # add area of vehicle polygon
-        #     mapping.at[stim_id, 'veh_area'] = polygon.area
-        # # add mean value of counts
-        # mapping['gazes_mean'] = mapping[self.durations].mean(axis=1)
-        # # convert counts of participants to integers
-        # for duration in range(len(self.durations)):
-        #     column = str(self.durations[duration]) + '_count'
-        #     mapping[column] = mapping[column].astype(int)
-        # save to csv
-        if self.save_csv:
-            # save to csv
-            mapping.to_csv(cs.settings.output_dir + '/' +
-                           self.file_mapping_csv + '.csv')
-        # return mapping
-        return mapping
-
     def filter_data(self, df):
         """
         Filter data based on the folllowing criteria:
