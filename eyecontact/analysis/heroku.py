@@ -75,7 +75,6 @@ class Heroku:
             df = cs.common.load_from_p(self.file_p,
                                        'heroku data')
         # process data
-        # todo: save browser interaction lists per stimulus
         else:
             # read files with heroku data one by one
             data_list = []
@@ -339,7 +338,7 @@ class Heroku:
         injections = cs.common.get_configs('injections')
         # answers to injected questions
         injections_answers = cs.common.get_configs('injections_answers')
-        # # df to store data to filter out
+        # df to store data to filter out
         df_1 = pd.DataFrame()
         # loop over rows in data
         # tqdm adds progress bar
