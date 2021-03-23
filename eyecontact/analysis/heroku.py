@@ -138,22 +138,21 @@ class Heroku:
                         # extract pressed keys and rt values
                         key = [point['key'] for point in responses]
                         rt = [point['rt'] for point in responses]
-                        # Check if inputted values were recorded previously
+                        # check if values were recorded previously
                         if stim_name + '-key' not in dict_row.keys():
                             # first value
                             dict_row[stim_name + '-key'] = key
                         else:
                             # previous values found
                             dict_row[stim_name + '-key'].append(key)
-                        # Check if time spent values were recorded
-                        # previously
+                        # check if values were recorded previously
                         if stim_name + '-rt' not in dict_row.keys():
                             # first value
                             dict_row[stim_name + '-rt'] = rt
                         else:
                             # previous values found
                             dict_row[stim_name + '-rt'].append(rt)
-                    # questions
+                    # questions after stimulus
                     if 'responses' in data_cell.keys() and stim_name != '':
                         # record given keypresses
                         responses = data_cell['responses']
@@ -168,7 +167,7 @@ class Heroku:
                         for key, value in responses.items():
                             questions.append(key)
                             answers.append(value)
-                        # Check if inputted values were recorded previously
+                        # check if values were recorded previously
                         if stim_name + '-qs' not in dict_row.keys():
                             # first value
                             dict_row[stim_name + '-qs'] = questions
@@ -195,7 +194,7 @@ class Heroku:
                         question_order = [int(x) for x in qo_str.split(',')]
                         logger.debug('Found question order {}.',
                                      question_order)
-                        # Check if inputted values were recorded previously
+                        # check if values were recorded previously
                         if stim_name + '-qo' not in dict_row.keys():
                             # first value
                             dict_row[stim_name + '-qo'] = question_order
@@ -209,7 +208,7 @@ class Heroku:
                         injection_q = data_cell['injection_q']
                         logger.debug('Found injection question {}.',
                                      injection_q)
-                        # Check if inputted values were recorded previously
+                        # check if values were recorded previously
                         if stim_name + '-qi' not in dict_row.keys():
                             # first value
                             dict_row[stim_name + '-qi'] = [injection_q]
@@ -235,14 +234,46 @@ class Heroku:
                         else:
                             # previous values found
                             dict_row[stim_name + '-event'].append(event)
-                        # Check if time spent values were recorded
-                        # previously
+                        # check if values were recorded previously
                         if stim_name + '-time' not in dict_row.keys():
                             # first value
                             dict_row[stim_name + '-time'] = time
                         else:
                             # previous values found
                             dict_row[stim_name + '-time'].append(time)
+                    # questions in the end
+                    if 'responses' in data_cell.keys() and stim_name == '':
+                        # record given keypresses
+                        responses = data_cell['responses']
+                        logger.debug('Found responses to final questions {}.',
+                                     responses)
+                        # extract pressed keys and rt values
+                        responses = ast.literal_eval(re.search('({.+})',
+                                                     responses).group(0))
+                        # unpack questions and answers
+                        questions = []
+                        answers = []
+                        for key, value in responses.items():
+                            questions.append(key)
+                            answers.append(value)
+                        # Check if inputted values were recorded previously
+                        if 'end-qs' not in dict_row.keys():
+                            dict_row['end-qs'] = questions
+                            dict_row['end-as'] = answers
+                    # question order
+                    if 'question_order' in data_cell.keys() \
+                       and stim_name == '':
+                        # unpack question order
+                        qo_str = data_cell['question_order']
+                        # remove brackets []
+                        qo_str = qo_str[1:]
+                        qo_str = qo_str[:-1]
+                        # unpack to int
+                        question_order = [int(x) for x in qo_str.split(',')]
+                        logger.debug('Found question order for final ' +
+                                     'questions {}.',
+                                     question_order)
+                        dict_row['end-qo'] = question_order
                 # worker_code was ecnountered before
                 if dict_row['worker_code'] in data_dict.keys():
                     # iterate over items in the data dictionary
