@@ -5,9 +5,9 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import re
+import ast
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
-from collections import Counter
 
 import eyecontact as cs
 
@@ -92,12 +92,10 @@ class Heroku:
                 dict_row = {}
                 # load data from a single row into a list
                 list_row = json.loads(row)
-                # flag that stimulus was detected
-                stim_found = False
                 # last found stimulus
                 stim_name = ''
-                # last time_elapsed
-                time_elapsed_last = -1
+                # trial last found stimulus
+                stim_trial = -1
                 # go over cells in the row with data
                 for data_cell in list_row['data']:
                     # extract meta info form the call
@@ -128,39 +126,118 @@ class Heroku:
                             if self.prefixes['stimulus'] in stim_no_path:
                                 # Record that stimulus was detected for the
                                 # cells to follow
-                                stim_found = True
                                 stim_name = stim_no_path
+                                # record trial of stimulus
+                                stim_trial = data_cell['trial_index']
                     # keypresses
-                    if 'rts' in data_cell.keys():
+                    if 'rts' in data_cell.keys() and stim_name != '':
                         # record given keypresses
                         responses = data_cell['rts']
                         logger.debug('Found {} points in keypress data.',
                                      len(responses))
-                        if stim_name != '':
-                            # extract pressed keys and rt values
-                            key = [point['key'] for point in responses]
-                            rt = [point['rt'] for point in responses]
-                            # Check if inputted values were recorded previously
-                            if stim_name + '-key' not in dict_row.keys():
-                                # first value
-                                dict_row[stim_name + '-key'] = key
-                            else:
-                                # previous values found
-                                dict_row[stim_name + '-key'].append(key)
-                            # Check if time spent values were recorded
-                            # previously
-                            if stim_name + '-rt' not in dict_row.keys():
-                                # first value
-                                dict_row[stim_name + '-rt'] = rt
-                            else:
-                                # previous values found
-                                dict_row[stim_name + '-rt'].append(rt)
-                            # reset flags for found stimulus
-                            stim_found = False
-                            stim_name = ''
-                    # record time_elapsed
-                    if 'time_elapsed' in data_cell.keys():
-                        time_elapsed_last = data_cell['time_elapsed']
+                        # extract pressed keys and rt values
+                        key = [point['key'] for point in responses]
+                        rt = [point['rt'] for point in responses]
+                        # Check if inputted values were recorded previously
+                        if stim_name + '-key' not in dict_row.keys():
+                            # first value
+                            dict_row[stim_name + '-key'] = key
+                        else:
+                            # previous values found
+                            dict_row[stim_name + '-key'].append(key)
+                        # Check if time spent values were recorded
+                        # previously
+                        if stim_name + '-rt' not in dict_row.keys():
+                            # first value
+                            dict_row[stim_name + '-rt'] = rt
+                        else:
+                            # previous values found
+                            dict_row[stim_name + '-rt'].append(rt)
+                    # questions
+                    if 'responses' in data_cell.keys() and stim_name != '':
+                        # record given keypresses
+                        responses = data_cell['responses']
+                        logger.debug('Found responses to questions {}.',
+                                     responses)
+                        # extract pressed keys and rt values
+                        responses = ast.literal_eval(re.search('({.+})',
+                                                     responses).group(0))
+                        # unpack questions and answers
+                        questions = []
+                        answers = []
+                        for key, value in responses.items():
+                            questions.append(key)
+                            answers.append(value)
+                        # Check if inputted values were recorded previously
+                        if stim_name + '-qs' not in dict_row.keys():
+                            # first value
+                            dict_row[stim_name + '-qs'] = questions
+                        else:
+                            # previous values found
+                            dict_row[stim_name + '-qs'].append(questions)
+                        # Check if time spent values were recorded
+                        # previously
+                        if stim_name + '-as' not in dict_row.keys():
+                            # first value
+                            dict_row[stim_name + '-as'] = answers
+                        else:
+                            # previous values found
+                            dict_row[stim_name + '-as'].append(answers)
+                    # question order
+                    if 'question_order' in data_cell.keys() \
+                       and stim_name != '':
+                        # record given keypresses
+                        question_order = data_cell['question_order']
+                        logger.debug('Found question order {}.',
+                                     question_order)
+                        # Check if inputted values were recorded previously
+                        if stim_name + '-qo' not in dict_row.keys():
+                            # first value
+                            dict_row[stim_name + '-qo'] = question_order
+                        else:
+                            # previous values found
+                            dict_row[stim_name + '-qo'].append(question_order)
+                    # injection question
+                    if 'question_injection' in data_cell.keys() \
+                       and stim_name != '':
+                        # record given keypresses
+                        injection_q = data_cell['injection_q']
+                        logger.debug('Found injection question {}.',
+                                     injection_q)
+                        # Check if inputted values were recorded previously
+                        if stim_name + '-qi' not in dict_row.keys():
+                            # first value
+                            dict_row[stim_name + '-qi'] = injection_q
+                        else:
+                            # previous values found
+                            dict_row[stim_name + '-qi'].append(injection_q)
+                    # browser interaction events
+                    if 'interactions' in data_cell.keys() and stim_name != '':
+                        interactions = data_cell['interactions']
+                        logger.debug('Found {} browser interactions.',
+                                     len(interactions))
+                        # extract events and timestamps
+                        event = []
+                        time = []
+                        for interation in interactions:
+                            if interation['trial'] == stim_trial:
+                                event.append(interation['event'])
+                                time.append(interation['time'])
+                        # Check if inputted values were recorded previously
+                        if stim_name + '-event' not in dict_row.keys():
+                            # first value
+                            dict_row[stim_name + '-event'] = event
+                        else:
+                            # previous values found
+                            dict_row[stim_name + '-event'].append(event)
+                        # Check if time spent values were recorded
+                        # previously
+                        if stim_name + '-time' not in dict_row.keys():
+                            # first value
+                            dict_row[stim_name + '-time'] = time
+                        else:
+                            # previous values found
+                            dict_row[stim_name + '-time'].append(time)
                 # worker_code was ecnountered before
                 if dict_row['worker_code'] in data_dict.keys():
                     # iterate over items in the data dictionary
@@ -176,7 +253,7 @@ class Heroku:
                 # worker_code is ecnountered for the first time
                 else:
                     data_dict[dict_row['worker_code']] = dict_row
-            # turn into panda's dataframe
+            # turn into pandas dataframe
             df = pd.DataFrame(data_dict)
             df = df.transpose()
             # report people that attempted study
@@ -184,7 +261,7 @@ class Heroku:
             logger.info('People who attempted to participate: {}',
                         unique_worker_codes.shape[0])
             # filter data
-            df = self.filter_data(df)
+            # df = self.filter_data(df)
         # save to pickle
         if self.save_p:
             cs.common.save_to_p(self.file_p, df, 'heroku data')
@@ -270,19 +347,83 @@ class Heroku:
     def filter_data(self, df):
         """
         Filter data based on the folllowing criteria:
-            1. People who entered incorrect codes for sentinel images more than
-               cs.common.get_configs('allowed_mistakes_sent') times.
+            1. People who made mistakes in injected questions.
         """
-        # more than allowed number of mistake with codes for sentinel images
         # load mapping of codes and coordinates
         logger.info('Filtering heroku data.')
+        # 1. People who made mistakes in injected questions
+        logger.info('Filter-h1. People who made mistakes in injected '
+                    + 'questions.')
+        allowed_mistakes = cs.common.get_configs('allowed_mistakes_injections')  # noqa: E501
+        # # number of sentinel images in trainig
+        # training_total = gz.common.get_configs('training_sent')
+        # # df to store data to filter out
+        df_1 = pd.DataFrame()
+        # tod
+        # # loop over rows in data
+        # # tqdm adds progress bar
+        # for index, row in tqdm(df.iterrows(), total=df.shape[0]):
+        #     # fill nans with empty lists
+        #     empty = pd.Series([[] for _ in range(len(row.index))],
+        #                       index=row.index)
+        #     row = row.fillna(empty)
+        #     # counter mistakes
+        #     mistakes_counter = 0
+        #     # counter sentinel images found in training
+        #     training_counter = 0
+        #     # loop over values in the row
+        #     for index_r, value_r in row.iteritems():
+        #         # check if input is given
+        #         if (value_r == []):
+        #             # if no data present, move to the next cell
+        #             continue
+        #         # sentinel image
+        #         if 'sentinel_' in index_r and '-in' in index_r:
+        #             # sentinel image in training found
+        #             if training_counter < training_total:
+        #                 # increase counter of sentinel images
+        #                 training_counter = training_counter + 1
+        #                 # skip since we are still in training data
+        #                 continue
+        #             # sentinel image not in training found
+        #             else:
+        #                 # increase counter of sentinel images
+        #                 training_counter = training_counter + 1
+        #                 sent_found = True
+        #                 # extract ID of image
+        #                 num_found = re.findall(r'\d+',
+        #                                        index_r)
+        #                 sent_name = num_found[0]
+        #                 # check if input is in list of correct codes
+        #                 mapping_cb = '../public/img/sentinel/sentinel_' + \
+        #                              str(sent_name) + \
+        #                              '.jpg'
+        #                 if (value_r[0] not in mapping[mapping_cb]['correct_codes']):  # noqa: E501
+        #                     # mistake found
+        #                     mistakes_counter = mistakes_counter + 1
+        #                     # check if limit was reached
+        #                     if mistakes_counter > allowed_mistakes:
+        #                         logger.debug('{}: found {} mistakes for '
+        #                                      + 'sentinel images.',
+        #                                      row['worker_code'],
+        #                                      mistakes_counter)
+        #                         # add to df with data to filter out
+        #                         df_1 = df_1.append(row)
+        #                         break
+        logger.info('Filter-h1. People who made more than {} mistakes with '
+                    + 'injected questions: {}',
+                    allowed_mistakes,
+                    df_1.shape[0])
         # concatanate dfs with filtered data
         old_size = df.shape[0]
-        df_filtered = df  # no filter applied
+        # df_filtered = pd.concat([df_1, df_2])
+        df_filtered = df1
         # drop rows with filtered data
         unique_worker_codes = df_filtered['worker_code'].drop_duplicates()
         df = df[~df['worker_code'].isin(unique_worker_codes)]
-        return df_filtered
+        logger.info('Filtered in total in heroku data: {}',
+                    old_size - df.shape[0])
+        return df
 
     def show_info(self):
         """
