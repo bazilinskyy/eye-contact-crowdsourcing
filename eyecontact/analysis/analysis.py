@@ -39,7 +39,6 @@ class Analysis:
         columns_drop = ['no', 'scenario']
         mapping = mapping.drop(columns_drop, 1)
         # mapping.fillna(0, inplace=True)
-        print(mapping)
         # create correlation matrix
         corr = mapping.corr()
         # create mask
