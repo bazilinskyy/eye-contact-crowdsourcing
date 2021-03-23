@@ -2,7 +2,7 @@ import setuptools
 
 
 setuptools.setup(
-    name="cshf",
+    name="eyecontact",
     version="1.0",
     packages=setuptools.find_packages(),
 )
