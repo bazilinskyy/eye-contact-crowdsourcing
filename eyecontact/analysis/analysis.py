@@ -14,6 +14,7 @@ import pandas as pd
 import plotly as py
 import plotly.graph_objs as go
 import plotly.io as pio
+import plotly.express as px
 from plotly import subplots
 
 import eyecontact as cs
@@ -79,6 +80,18 @@ class Analysis:
         # revert font
         self.reset_font()
 
+    def hist_stim_duration(self, df,  save_file=False):
+        """
+        Output distribution of stimulus durations..
+        """
+        logger.info('Creating histogram of stimulus durations.')
+        df = df[df.columns[df.columns.to_series().str.contains('-dur')]]
+        # create figure
+        # fig = plt.figure(figsize=(15, 8))
+        fig = px.histogram(df)
+        fig.update_layout(template='plotly_dark',)
+        self.save_plotly(fig, 'hist_stim_duration', self.folder)
+
     def plot_plotly(self, df):
         """Plot figures with analysis.
 
@@ -123,11 +136,17 @@ class Analysis:
         # fig['layout']['showlegend'] = True
         fig['layout']['updatemenus'] = updatemenus
         fig.update_layout(template='plotly_dark',)
+        self.save_plotly(fig, 'main_plot', self.folder)
+
+    def save_plotly(self, fig, name, output_subdir):
+        """
+        Helper function to save figure as file.
+        """
         # build path
         path = cs.settings.output_dir + output_subdir
         if not os.path.exists(path):
             os.makedirs(path)
-        file_plot = os.path.join(path + 'plot_' + ride.ride_id + '.html')
+        file_plot = os.path.join(path + name + '.html')
         # save to file
         py.offline.plot(fig, filename=file_plot)
 
