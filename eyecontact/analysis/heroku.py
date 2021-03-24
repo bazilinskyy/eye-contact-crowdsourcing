@@ -85,6 +85,10 @@ class Heroku:
                 # add data from the file to the dictionary
                 data_list += f.readlines()
                 f.close()
+            # hold info on previous row for worker
+            prev_row_info = pd.DataFrame(columns=['worker_code',
+                                                  'time_elapsed'])
+            prev_row_info.set_index('worker_code', inplace=True)
             # read rows in data
             for row in tqdm(data_list):  # tqdm adds progress bar
                 # use dict to store data
@@ -95,6 +99,11 @@ class Heroku:
                 stim_name = ''
                 # trial last found stimulus
                 stim_trial = -1
+                # last time_elapsed for logging duration of trial
+                elapsed_l = 0
+                # record worker_code in the row. assuming that each row has at
+                # least one worker_code
+                worker_code = [d['worker_code'] for d in list_row['data'] if 'worker_code' in d][0]  # noqa: E501
                 # go over cells in the row with data
                 for data_cell in list_row['data']:
                     # extract meta info form the call
@@ -128,6 +137,23 @@ class Heroku:
                                 stim_name = stim_no_path
                                 # record trial of stimulus
                                 stim_trial = data_cell['trial_index']
+                                # add trial duration
+                                if 'time_elapsed' in data_cell.keys():
+                                    # positive time elapsed from las cell
+                                    if elapsed_l:
+                                        time = elapsed_l
+                                    # non-positive time elapsed. use value from
+                                    # the known cell for worker
+                                    else:
+                                        time = prev_row_info.loc[worker_code, 'time_elapsed']  # noqa: E501
+                                    # calculate duration
+                                    dur = float(data_cell['time_elapsed']) - time  # noqa: E501
+                                    if stim_name + '-dur' not in dict_row.keys():  # noqa: E501
+                                        # first value
+                                        dict_row[stim_name + '-dur'] = dur  # noqa: E501
+                                    else:
+                                        # previous values found
+                                        dict_row[stim_name + '-dur'].append(dur)  # noqa: E501
                     # keypresses
                     if 'rts' in data_cell.keys() and stim_name != '':
                         # record given keypresses
@@ -273,6 +299,11 @@ class Heroku:
                                      'questions {}.',
                                      question_order)
                         dict_row['end-qo'] = question_order
+                    # record last time_elapsed
+                    if 'time_elapsed' in data_cell.keys():
+                        elapsed_l = float(data_cell['time_elapsed'])
+                # update last time_elapsed for worker
+                prev_row_info.loc[dict_row['worker_code'], 'time_elapsed'] = elapsed_l  # noqa: E501
                 # worker_code was ecnountered before
                 if dict_row['worker_code'] in data_dict.keys():
                     # iterate over items in the data dictionary
