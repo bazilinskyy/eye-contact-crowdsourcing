@@ -26,19 +26,24 @@ logger = cs.CustomLogger(__name__)  # use custom logger
 class Analysis:
     # folder for output
     folder = '/figures/'
+    # resolution of keypress data
+    res = 0
 
-    def __init__(self):
+    def __init__(self, res: int):
         # set font to Times
         plt.rc('font', family='serif')
         # set template for plotly output
         self.template = cs.common.get_configs('plotly_template')
+        # store resolution for keypress data
+        self.res = res
 
     def corr_matrix(self, mapping, save_file=False):
         """
         Output correlation matrix.
         """
+        logger.info('Creating correlation matrix.')
         # drop not needed columns
-        columns_drop = ['no', 'scenario']
+        columns_drop = ['no', 'scenario', 'speed', 'video_length']
         mapping = mapping.drop(columns_drop, 1)
         # mapping.fillna(0, inplace=True)
         # create correlation matrix
@@ -95,8 +100,7 @@ class Analysis:
         else:
             fig = px.histogram(df, marginal='rug')
         # ticks as numbers
-        fig.update_layout(xaxis=dict(tickformat='digits',
-                                     dtick=2000))
+        fig.update_layout(xaxis=dict(tickformat='digits'))
         # update layout
         fig.update_layout(template=self.template)
         # save file
@@ -116,6 +120,8 @@ class Analysis:
             save_file (bool, optional): flag for saving an html file with plot.
         """
         logger.info('Creating histogram of time of study.')
+        # cater for missing country
+        df['country'] = df['country'].fillna('NaN')
         # create figure
         if nbins:
             fig = px.histogram(df,
@@ -138,7 +144,7 @@ class Analysis:
 
     def hist_browser_dimensions(self, df, nbins=0, save_file=True):
         """
-        Output distribution of browser dimensions durations.
+        Output distribution of browser dimensions.
 
         Args:
             df (dataframe): dataframe with data from heroku.
@@ -205,7 +211,7 @@ class Analysis:
             type_plot (str, optional): type of plot: scatter, density_heatmap.
             save_file (bool, optional): flag for saving an html file with plot.
         """
-        logger.info('Creating plot of type_plot %s for browser dimensions.',
+        logger.info('Creating plot of type_plot {} for browser dimensions.',
                     type_plot)
         # scatter plot with histograms
         if type_plot == 'scatter':
@@ -224,7 +230,7 @@ class Analysis:
                                      marginal_y='violin')
         # unsopported type
         else:
-            logger.error('Wrong type of plot %s given.', type_plot)
+            logger.error('Wrong type of plot {} given.', type_plot)
             return -1
 
         # update layout
@@ -236,53 +242,320 @@ class Analysis:
         else:
             fig.show()
 
-    def plot_plotly(self, df):
-        """Plot figures with analysis.
+    def plot_kp(self, df, save_file=True,
+                xaxis_title='Time (ms)',
+                yaxis_title='Percentage of keypresses',):
+        """Take in a variable with values which are optional
+        Args:
+            data (array of keypress data): Array containing data of all classes
+                                           to plot.
+            titles (array of strings): Array with the same length as data,
+                                       which are the plot names.
+        """
+        logger.info('Creating visualisations of keypresses for all data.')
+        # calculate times
+        times = np.array(range(self.res, df['video_length'].max() + self.res, self.res)) / 1000  # noqa: E501
+        # add all data together. Must be converted to np array to add together
+        kp_data = np.array([0] * len(times))
+        for i, data in enumerate(df['keypresses']):
+            # append zeros to match longest duration
+            data = np.pad(data, (0, len(times) - len(data)), 'constant')
+            # add data
+            kp_data += np.array(data)
+        kp_data = (kp_data / i)
+        # plot keypresses
+        fig = px.line(y=kp_data,
+                      x=times,
+                      title='Keypresses for all stimuli')
+        # update layout
+        fig.update_layout(template=self.template,
+                          xaxis_title=xaxis_title,
+                          yaxis_title=yaxis_title)
+        # save file
+        if save_file:
+            self.save_plotly(fig, 'kp', self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
+
+    def plot_kp_video(self, df, stimulus, extention='mp4',
+                      xaxis_title='Time (ms)',
+                      yaxis_title='Percentage of keypresses',
+                      save_file=True):
+        """Plot keypresses with multiple variables as a filter.
 
         Args:
-            df (dataframe): dataframe with data.
+            df (TYPE): Description
+            res (TYPE): Description
+            save_file (bool, optional): Description
         """
-        # todo: plotly plot
-        logger.info('Creating visualisations with plotly.')
+        # extract video length
+        video_len = df.loc[stimulus]['video_length']
+        # calculate times
+        times = np.array(range(self.res, video_len + self.res, self.res)) / 1000  # noqa: E501
+        # plot keypresses
+        fig = px.line(y=df.loc[stimulus]['keypresses'],
+                      x=times,
+                      title='Keypresses for stimulus ' + stimulus)
+        # update layout
+        fig.update_layout(template=self.template,
+                          xaxis_title=xaxis_title,
+                          yaxis_title=yaxis_title)
+        # save file
+        if save_file:
+            self.save_plotly(fig, 'kp_' + stimulus, self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
+
+    def plot_kp_videos(self, df, xaxis_title='Time (ms)',
+                       yaxis_title='Percentage of keypresses',
+                       save_file=True):
+        """Plot keypresses with multiple variables as a filter.
+
+        Args:
+            df (TYPE): Description
+            res (TYPE): Description
+            save_file (bool, optional): Description
+        """
+        # calculate times
+        times = np.array(range(self.res, df['video_length'].max() + self.res, self.res)) / 1000  # noqa: E501
+
         # plotly
         fig = subplots.make_subplots(rows=1,
                                      cols=1,
                                      shared_xaxes=True)
-        times = [dt.datetime.fromtimestamp(time) for time in ride.time]
-        # variables to plot
-        variables = []
-        data = df[variables]
-        # plot each variable in data
-        for i, variable in enumerate(variables):
-            fig.add_trace(go.Scatter(y=data,
+        # plot for all videos
+        for index, row in df.iterrows():
+            values = row['keypresses']
+            fig.add_trace(go.Scatter(y=values,
                                      mode='lines',
                                      x=times,
-                                     name=variable),
+                                     name=os.path.splitext(index)[0]),
                           row=1,
                           col=1)
         buttons = list([dict(label='All',
                              method='update',
-                             args=[{'visible': [True] * 3 * len(variables)},
-                                   {'title': 'All',
+                             args=[{'visible': [True] * df.shape[0]},
+                                   {'title': 'Keypresses for individual stimuli',  # noqa: E501
                                     'showlegend': True}])])
-        for i, label in enumerate(variables):
-            visibility = [[i == j] for j in range(len(variables))]
+        # counter for traversing through stimuli
+        counter_rows = 0
+        for index, row in df.iterrows():
+            visibility = [[counter_rows == j] for j in range(df.shape[0])]
             visibility = [item for sublist in visibility for item in sublist]
-            button = dict(label=label,
+            button = dict(label=os.path.splitext(index)[0],
                           method='update',
                           args=[{'visible': visibility},
-                                {'title': label}])
+                                {'title': os.path.splitext(index)[0]}])
             buttons.append(button)
-
+            counter_rows = counter_rows + 1
         updatemenus = [dict(x=-0.15, buttons=buttons, showactive=True)]
-        # update layout
-        fig['layout']['title'] = 'Title'
-        # fig['layout']['showlegend'] = True
         fig['layout']['updatemenus'] = updatemenus
-        fig.update_layout(template=self.template)
+        # update layout
+        fig['layout']['title'] = 'Keypresses for individual stimuli'
+        fig.update_layout(template=self.template,
+                          xaxis_title=xaxis_title,
+                          yaxis_title=yaxis_title)
         # save file
         if save_file:
-            self.save_plotly(fig, 'main_plot', self.folder)
+            self.save_plotly(fig, 'kp_videos', self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
+
+    def plot_kp_variable(self, df, variable, values=None,
+                         xaxis_title='Time (ms)',
+                         yaxis_title='Percentage of keypresses',
+                         save_file=True):
+        """Plot figures of individual videos with analysis.
+        Args:
+            df (TYPE): updated dataframe with keypress data.
+            res (TYPE): Description
+            variable (TYPE): Description
+            values (None, optional): Description
+            save_file (bool, optional): Description.
+        """
+        logger.info('Creating visualisation of keypresses based on values ' +
+                    '{} of variable {} .', values, variable)
+        # calculate times
+        times = np.array(range(self.res, df['video_length'].max() + self.res, self.res)) / 1000  # noqa: E501
+        # if no values specified, plot value
+        if not values:
+            values = df[variable].unique()
+        # extract data for values
+        extracted_data = []
+        for data in values:
+            keypress_data = np.array([0] * len(times))
+            for index, row in df[df[variable] == data].iterrows():
+                # append zeros to match longest duration
+                data_row = np.array(row['keypresses'])
+                data_row = np.pad(data_row, (0, len(times) - len(data_row)), 'constant')
+                keypress_data = keypress_data + data_row
+            extracted_data.append({'value': data,
+                                   'data': keypress_data / len(keypress_data)})
+        # plotly figure
+        fig = subplots.make_subplots(rows=1,
+                                     cols=1,
+                                     shared_xaxes=True)
+        # plot each variable in data
+        for data in extracted_data:
+            fig.add_trace(go.Scatter(y=data['data'],  # noqa: E501
+                                     mode='lines',
+                                     x=times,
+                                     name=data['value']),
+                          row=1,
+                          col=1)
+        # create tabs
+        buttons = list([dict(label='All',
+                             method='update',
+                             args=[{'visible': [True] * len(values)},
+                                   {'title': 'All',
+                                    'showlegend': True}])])
+        # counter for traversing through stimuli
+        counter_rows = 0
+        for value in values:
+            visibility = [[counter_rows == j] for j in range(len(values))]
+            visibility = [item for sublist in visibility for item in sublist]  # noqa: E501
+            button = dict(label=value,
+                          method='update',
+                          args=[{'visible': visibility},
+                                {'title': value}])
+            buttons.append(button)
+            counter_rows = counter_rows + 1
+        # add menu
+        updatemenus = [dict(x=-0.15, buttons=buttons, showactive=True)]
+        fig['layout']['updatemenus'] = updatemenus
+        # update layout
+        fig['layout']['title'] = 'Keypresses for ' + variable
+        fig.update_layout(template=self.template,
+                          xaxis_title=xaxis_title,
+                          yaxis_title=yaxis_title)
+        # save file
+        if save_file:
+            self.save_plotly(fig,
+                             'kp_' + variable + '-' +
+                             ','.join(str(val) for val in values),
+                             self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
+
+    def plot_kp_variables_or(self, df, variables, xaxis_title='Time (ms)',
+                             yaxis_title='Percentage of keypresses',
+                             save_file=True):
+        """Separate plots of keypresses with multiple variables as a filter.
+
+        Args:
+            df (TYPE): Description
+            res (TYPE): Description
+            variables (TYPE): Description
+            save_file (bool, optional): Description
+        """
+        logger.info('Creating visualisation of keypresses based on ' +
+                    'variables {} with OR filter.', variables)
+        # build string with variables
+        variables_str = ''
+        for variable in variables:
+            variables_str = variables_str + '_' + variable['variable'] + \
+                '-' + variable['value']
+        # calculate times
+        times = np.array(range(self.res, df['video_length'].max() + self.res, self.res)) / 1000  # noqa: E501
+        # extract data for values
+        extracted_data = []
+        for var in variables:
+            keypress_data = np.array([0] * len(times))
+            for index, row in df[df[var['variable']] == var['value']].iterrows():  # noqa: E501
+                keypress_data = keypress_data + np.array(row['keypresses'])
+            extracted_data.append({'value': var['variable'] + '-' + var['value'],  # noqa: E501
+                                   'data': keypress_data / len(keypress_data)})
+        # plotly figure
+        fig = subplots.make_subplots(rows=1,
+                                     cols=1,
+                                     shared_xaxes=True)
+        # plot each variable in data
+        for data in extracted_data:
+            fig.add_trace(go.Scatter(y=data['data'],  # noqa: E501
+                                     mode='lines',
+                                     x=times,
+                                     name=data['value']),  # noqa: E501
+                          row=1,
+                          col=1)
+        # create tabs
+        buttons = list([dict(label='All',
+                             method='update',
+                             args=[{'visible': [True] * len(variables)},
+                                   {'title': 'All',
+                                    'showlegend': True}])])
+        # counter for traversing through stimuli
+        counter_rows = 0
+        for data in extracted_data:
+            visibility = [[counter_rows == j] for j in range(len(variables))]
+            visibility = [item for sublist in visibility for item in sublist]
+            button = dict(label=data['value'],
+                          method='update',
+                          args=[{'visible': visibility},
+                                {'title': data['value']}])  # noqa: E501
+            buttons.append(button)
+            counter_rows = counter_rows + 1
+        # add menu
+        updatemenus = [dict(x=-0.15, buttons=buttons, showactive=True)]
+        fig['layout']['updatemenus'] = updatemenus
+        # update layout
+        fig['layout']['title'] = 'Keypresses with OR filter'
+        fig.update_layout(template=self.template,
+                          xaxis_title=xaxis_title,
+                          yaxis_title=yaxis_title)
+        # save file
+        if save_file:
+            self.save_plotly(fig, 'kp_or' + variables_str, self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
+
+    def plot_kp_variables_and(self, df, variables,
+                              xaxis_title='Time (ms)',
+                              yaxis_title='Percentage of keypresses',
+                              save_file=True):
+        """Separate plots of keypresses with multiple variables as a filter.
+
+        Args:
+            df (TYPE): Description
+            res (TYPE): Description
+            variables (TYPE): Description
+            save_file (bool, optional): Description
+        """
+        logger.info('Creating visualisation of keypresses based on ' +
+                    'variables {} with AND filter.', variables)
+        # build string with variables
+        variables_str = ''
+        for variable in variables:
+            variables_str = variables_str + '_' + variable['variable']
+        # calculate times
+        times = np.array(range(self.res, df['video_length'].max() + self.res, self.res)) / 1000  # noqa: E501
+        # filter df based on variables given
+        for var in variables:
+            df = df[df[var['variable']] == var['value']]
+        # check if any data in df left
+        if df.empty:
+            logger.error('Provided variables yielded empty dataframe.')
+            return
+        # add all data together. Must be converted to np array to add together
+        kp_data = np.array([0] * len(times))
+        for i, data in enumerate(df['keypresses']):
+            kp_data += np.array(data)
+        kp_data = (kp_data / i)
+        # plot keypresses
+        fig = px.line(y=kp_data,
+                      x=times,
+                      title='Keypresses with AND filter')
+        # update layout
+        fig.update_layout(template=self.template,
+                          xaxis_title=xaxis_title,
+                          yaxis_title=yaxis_title)
+        # save file
+        if save_file:
+            self.save_plotly(fig, 'kp_and' + variables_str, self.folder)
         # open it in localhost instead
         else:
             fig.show()

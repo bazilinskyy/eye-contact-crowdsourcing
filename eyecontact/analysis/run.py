@@ -13,6 +13,8 @@ SAVE_P = True  # save pickle files with data
 LOAD_P = False  # load pickle files with data
 SAVE_CSV = True  # load csv files with data
 REJECT_CHEATERS = False  # reject cheaters on Appen
+UPDATE_MAPPING = True  # update mapping with keypress data
+RES = 100  # resolution of keypress data plots
 file_coords = 'coords.p'  # file to save lists with coordinates
 file_mapping = 'mapping.p'  # file to save lists with coordinates
 
@@ -20,7 +22,8 @@ if __name__ == '__main__':
     # todo: add descriptions for methods automatically with a sublime plugin
     # create object for working with heroku data
     files_heroku = cs.common.get_configs('files_heroku')
-    heroku = cs.analysis.Heroku(files_data=files_heroku,
+    heroku = cs.analysis.Heroku(res=RES,
+                                files_data=files_heroku,
                                 save_p=SAVE_P,
                                 load_p=LOAD_P,
                                 save_csv=SAVE_CSV)
@@ -57,13 +60,38 @@ if __name__ == '__main__':
     appen_data = appen_data.set_index('worker_code')
     appen.set_data(appen_data)  # update object with filtered data
     appen.show_info()  # show info for filtered data
-    # read in mapping of stimuli
-    stimuli_mapped = heroku.read_mapping()
+    # update mapping with keypress data
+    if UPDATE_MAPPING:
+        # read in mapping of stimuli
+        stimuli_mapped = heroku.read_mapping()
+        # read in mapping of stimuli
+        stimuli_mapped = heroku.process_kp()
+        cs.common.save_to_p(file_mapping,
+                            stimuli_mapped,
+                            'mapping with keypress data')
+    else:
+        stimuli_mapped = cs.common.load_from_p(file_mapping,
+                                               'mapping of stimuli')
     # Output
-    analysis = cs.analysis.Analysis()
-    # number of stimuli to process
-    num_stimuli = cs.common.get_configs('num_stimuli')
-    logger.info('Creating figures for {} stimuli.', num_stimuli)
+    analysis = cs.analysis.Analysis(res=RES)
+    logger.info('Creating figures.')
+    # all keypresses
+    analysis.plot_kp(stimuli_mapped)
+    # keypresses of all videos individually
+    analysis.plot_kp_video(stimuli_mapped, 'video_0')
+    # keypresses of an individual stimulus
+    analysis.plot_kp_videos(stimuli_mapped)
+    # 1 var, all values
+    analysis.plot_kp_variable(stimuli_mapped, 'start_ec')
+    # 1 var, certain values
+    analysis.plot_kp_variable(stimuli_mapped, 'start_ec', ['16.6', '12.54'])
+    # separate plots for multiple variables
+    analysis.plot_kp_variables_or(stimuli_mapped, [{'variable': 'yielding', 'value': '1'},  # noqa: E501
+                                                   {'variable': 'start_ec', 'value': '16.6'},  # noqa: E501
+                                                   {'variable': 'end_ec', 'value': '27.3'}])  # noqa: E501
+    # multiple variables as a single filter
+    analysis.plot_kp_variables_and(stimuli_mapped, [{'variable': 'yielding', 'value': '1'},  # noqa: E501
+                                                    {'variable': 'start_ec', 'value': '16.6'}])  # noqa: E501
     # create correlation matrix
     analysis.corr_matrix(stimuli_mapped, save_file=True)
     # stimulus duration

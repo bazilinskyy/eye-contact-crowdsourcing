@@ -6,8 +6,6 @@ import numpy as np
 from tqdm import tqdm
 import re
 import ast
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
 
 import eyecontact as cs
 
@@ -21,6 +19,8 @@ class Heroku:
     # todo: parse browser interactions
     files_data = []  # list of files with heroku data
     heroku_data = pd.DataFrame()  # pandas dataframe with extracted data
+    mapping = pd.DataFrame()  # pandas dataframe with mapping
+    res = 0  # resolution for keypress data
     save_p = False  # save data as pickle file
     load_p = False  # load data as pickle file
     save_csv = False  # save data as csv file
@@ -46,10 +46,12 @@ class Heroku:
     default_dur = 0
 
     def __init__(self,
+                 res: int,
                  files_data: list,
                  save_p: bool,
                  load_p: bool,
                  save_csv: bool):
+        self.res = res
         self.files_data = files_data
         self.save_p = save_p
         self.load_p = load_p
@@ -355,11 +357,77 @@ class Heroku:
         Read mapping.
         """
         # read mapping from a csv file
-        mapping = pd.read_csv(cs.common.get_configs('mapping_stimuli'))
+        df = pd.read_csv(cs.common.get_configs('mapping_stimuli'))
         # set index as stimulus_id
-        mapping.set_index('video_id', inplace=True)
+        df.set_index('video_id', inplace=True)
+        # update attribute
+        self.mapping = df
         # return mapping as a dataframe
-        return mapping
+        return df
+
+    def process_kp(self):
+        """Process keypresses for resolution self.res.
+
+        Returns:
+            mapping: updated mapping df.
+        """
+        # get info from config file
+        num_stimuli = cs.common.get_configs('num_stimuli')
+        # array to store all binned rt data in
+        mapping_rt = []
+        # loop through all videos
+        for i in range(0, num_stimuli):
+            video_rt = 'video_' + str(i) + '-rt'
+            video_len = self.mapping.loc['video_' + str(i)]['video_length']
+            rt_data = []
+            counter_data = 0
+            for (columnName, columnData) in self.heroku_data.iteritems():
+                # find the right column to loop through
+                if video_rt == columnName:
+                    # loop through rows in column
+                    for row in columnData:
+                        # check if data is string to filter out nan data
+                        if type(row) == list:
+                            # saving amount of times the video has been watched
+                            counter_data += 1
+                            # if list contains only one value, append to
+                            # rt_data
+                            if len(row) == 1:
+                                rt_data.append(row[0])
+                            # if list contains more then one value, go through
+                            # list to remove keyholds
+                            elif len(row) > 1:
+                                for i in range(1, len(row)):
+                                    # if time between 2 stimuli is more then
+                                    # 35 ms, add to array (no hold)
+                                    if row[i] - row[i - 1] > 35:
+                                        # append buttonpress data to rt array
+                                        rt_data.append(row[i])
+                    # if all data for one video was found, divide them inbins
+                    keypresses = []
+                    # loop over all bins, dependent on resolution
+                    for rt in range(self.res, video_len + self.res, self.res):
+                        bin_counter = 0
+                        for data in rt_data:
+                            # go through all video data to find all data within
+                            # specific bin
+                            if rt - self.res < data <= rt:
+                                # if data is found, up bin counter
+                                bin_counter = + 1
+                        danger_percentage = bin_counter / counter_data
+                        keypresses.append(round(danger_percentage * 100))
+                    # append data from one video to the mapping array
+                    mapping_rt.append(keypresses)
+                    break
+        # update own mapping to include keypress data
+        self.mapping['keypresses'] = mapping_rt
+        # save to csv
+        if self.save_csv:
+            # save to csv
+            self.mapping.to_csv(cs.settings.output_dir + '/' +
+                                self.file_mapping_csv + '.csv')
+        # return new mapping
+        return self.mapping
 
     def filter_data(self, df):
         """
