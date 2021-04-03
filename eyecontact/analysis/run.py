@@ -75,34 +75,34 @@ if __name__ == '__main__':
     # Output
     analysis = cs.analysis.Analysis(res=RES)
     logger.info('Creating figures.')
-    # # all keypresses
-    # analysis.plot_kp(stimuli_mapped)
-    # # keypresses of all videos individually
-    # analysis.plot_kp_video(stimuli_mapped, 'video_0')
-    # # keypresses of an individual stimulus
-    # analysis.plot_kp_videos(stimuli_mapped)
-    # # 1 var, all values
-    # analysis.plot_kp_variable(stimuli_mapped, 'start_ec')
-    # # 1 var, certain values
-    # analysis.plot_kp_variable(stimuli_mapped, 'start_ec', ['16.6', '12.54'])
-    # # separate plots for multiple variables
-    # analysis.plot_kp_variables_or(stimuli_mapped, [{'variable': 'yielding', 'value': '1'},  # noqa: E501
-    #                                                {'variable': 'start_ec', 'value': '16.6'},  # noqa: E501
-    #                                                {'variable': 'end_ec', 'value': '27.3'}])  # noqa: E501
-    # # multiple variables as a single filter
-    # analysis.plot_kp_variables_and(stimuli_mapped, [{'variable': 'yielding', 'value': '1'},  # noqa: E501
-    #                                                 {'variable': 'start_ec', 'value': '16.6'}])  # noqa: E501
-    # # create correlation matrix
-    # analysis.corr_matrix(stimuli_mapped, save_file=True)
-    # # stimulus duration
-    # analysis.hist_stim_duration(heroku_data, nbins=100, save_file=True)
-    # # browser window dimensions
-    # # analysis.hist_browser_dimensions(heroku_data, nbins=100, save_file=True)
-    # analysis.scatter_browser_dimensions(heroku_data,
-    #                                     type_plot='scatter',
-    #                                     save_file=True)
-    # # time of participation
-    # analysis.hist_time_participation(appen_data, save_file=True)
+    # all keypresses
+    analysis.plot_kp(stimuli_mapped)
+    # keypresses of all videos individually
+    analysis.plot_kp_video(stimuli_mapped, 'video_0')
+    # keypresses of an individual stimulus
+    analysis.plot_kp_videos(stimuli_mapped)
+    # 1 var, all values
+    analysis.plot_kp_variable(stimuli_mapped, 'start_ec')
+    # 1 var, certain values
+    analysis.plot_kp_variable(stimuli_mapped, 'start_ec', ['16.6', '12.54'])
+    # separate plots for multiple variables
+    analysis.plot_kp_variables_or(stimuli_mapped, [{'variable': 'yielding', 'value': '1'},  # noqa: E501
+                                                   {'variable': 'start_ec', 'value': '16.6'},  # noqa: E501
+                                                   {'variable': 'end_ec', 'value': '27.3'}])  # noqa: E501
+    # multiple variables as a single filter
+    analysis.plot_kp_variables_and(stimuli_mapped, [{'variable': 'yielding', 'value': '1'},  # noqa: E501
+                                                    {'variable': 'start_ec', 'value': '16.6'}])  # noqa: E501
+    # create correlation matrix
+    analysis.corr_matrix(stimuli_mapped, save_file=True)
+    # stimulus duration
+    analysis.hist_stim_duration(heroku_data, nbins=100, save_file=True)
+    # browser window dimensions
+    # analysis.hist_browser_dimensions(heroku_data, nbins=100, save_file=True)
+    analysis.scatter_browser_dimensions(heroku_data,
+                                        type_plot='scatter',
+                                        save_file=True)
+    # time of participation
+    analysis.hist_time_participation(appen_data, save_file=True)
     # check if any figures are to be rendered
     figures = [manager.canvas.figure
                for manager in

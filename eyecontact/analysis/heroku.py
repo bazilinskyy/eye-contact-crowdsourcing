@@ -398,47 +398,49 @@ class Heroku:
                 for (col_name, col_data) in self.heroku_data.iteritems():
                     # find the right column to loop through
                     if video_rt == col_name:
-                        print(col_name, col_data)
                         # loop through rows in column
                         for row in col_data:
                             # check if data is string to filter out nan data
+                            # print('row', row)
                             if type(row) == list:
-                                # saving amount of times the video has been watched
-                                counter_data += 1
+                                # saving amount of times the video has been
+                                # watched
+                                counter_data = counter_data + 1
                                 # if list contains only one value, append to
                                 # rt_data
                                 if len(row) == 1:
                                     rt_data.append(row[0])
-                                # if list contains more then one value, go through
-                                # list to remove keyholds
+                                # if list contains more then one value, go
+                                # through list to remove keyholds
                                 elif len(row) > 1:
                                     for j in range(1, len(row)):
-                                        # if time between 2 stimuli is more then
-                                        # 35 ms, add to array (no hold)
+                                        # if time between 2 stimuli is more
+                                        # than 35 ms, add to array (no hold)
                                         if row[j] - row[j - 1] > 35:
-                                            # append buttonpress data to rt array
+                                            # append buttonpress data to rt
+                                            # array
                                             rt_data.append(row[j])
-                        # if all data for one video was found, divide them in bins
+                        # if all data for one video was found, divide them in
+                        # bins
                         kp = []
                         # loop over all bins, dependent on resolution
-                        for rt in range(self.res, video_len + self.res, self.res):
+                        for rt in range(self.res, video_len + self.res,
+                                        self.res):
                             bin_counter = 0
                             for data in rt_data:
-                                # go through all video data to find all data within
+                                # go through all video data to find all data
+                                # within
                                 # specific bin
                                 if rt - self.res < data <= rt:
                                     # if data is found, up bin counter
-                                    bin_counter = + 1
-                            danger_percentage = bin_counter / counter_data
-                            kp.append(round(danger_percentage * 100))
-                        print(video_rt, kp)
+                                    bin_counter = bin_counter + 1
+                            percentage = bin_counter / counter_data
+                            kp.append(round(percentage * 100))
                         # store keypresse from repetition
                         video_kp.append(kp)
                         break
             # calculate mean keypresse from all repetitions
-            print('video_kp', video_kp)
             kp_mean = [*map(mean, zip(*video_kp))]
-            print('mean', [*map(mean, zip(*video_kp))])
             # append data from one video to the mapping array
             mapping_rt.append(kp_mean)
         # update own mapping to include keypress data
