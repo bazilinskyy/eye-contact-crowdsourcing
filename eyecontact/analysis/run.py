@@ -2,6 +2,7 @@
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import matplotlib._pylab_helpers
+import datetime as dt
 
 import eyecontact as cs
 
@@ -94,8 +95,26 @@ if __name__ == '__main__':
                                                     {'variable': 'start_ec', 'value': '16.6'}])  # noqa: E501
     # create correlation matrix
     analysis.corr_matrix(stimuli_mapped, save_file=True)
-    # stimulus duration
+    # stimulus durations for all participants
     analysis.hist_stim_duration(heroku_data, nbins=100, save_file=True)
+    # stimulus durations for 2 time periods
+    time_ranges = [  # 1st pilot
+                   {'start': dt.datetime(2021, 3, 16, 00, 00, 00, 000,
+                                         tzinfo=dt.timezone.utc),
+                    'end': dt.datetime(2021, 3, 20, 00, 00, 00, 000,
+                                       tzinfo=dt.timezone.utc)
+                    },
+                   # 2nd pilot
+                   {'start': dt.datetime(2021, 3, 29, 00, 00, 00, 000,
+                                         tzinfo=dt.timezone.utc),
+                    'end': dt.datetime(2021, 4, 4, 00, 00, 00, 000,
+                                       tzinfo=dt.timezone.utc)
+                    }
+                   ]
+    analysis.hist_stim_duration_time(all_data,
+                                     time_ranges=time_ranges,
+                                     nbins=100,
+                                     save_file=True)
     # browser window dimensions
     # analysis.hist_browser_dimensions(heroku_data, nbins=100, save_file=True)
     analysis.scatter_browser_dimensions(heroku_data,

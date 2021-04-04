@@ -89,8 +89,8 @@ class Appen:
             # rename columns to readable names
             df.rename(columns=self.columns_mapping, inplace=True)
             # convert to time
-            df['start'] = pd.to_datetime(df['start'])
-            df['end'] = pd.to_datetime(df['end'])
+            df['start'] = pd.to_datetime(df['start'], utc=True)
+            df['end'] = pd.to_datetime(df['end'], utc=True)
             df['time'] = (df['end'] - df['start']) / pd.Timedelta(seconds=1)
             # remove underscores in the beginning of column name
             df.columns = df.columns.str.lstrip('_')
