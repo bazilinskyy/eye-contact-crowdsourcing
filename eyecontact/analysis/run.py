@@ -78,21 +78,23 @@ if __name__ == '__main__':
     logger.info('Creating figures.')
     # all keypresses
     analysis.plot_kp(stimuli_mapped)
-    # keypresses of all videos individually
-    analysis.plot_kp_video(stimuli_mapped, 'video_0')
     # keypresses of an individual stimulus
+    analysis.plot_kp_video(stimuli_mapped, 'video_0')
+    # keypresses of all videos individually
     analysis.plot_kp_videos(stimuli_mapped)
-    # 1 var, all values
+    # start of eye contact
     analysis.plot_kp_variable(stimuli_mapped, 'start_ec')
-    # 1 var, certain values
-    analysis.plot_kp_variable(stimuli_mapped, 'start_ec', ['16.6', '12.54'])
+    # start of eye contact, certain values
+    analysis.plot_kp_variable(stimuli_mapped, 'start_ec', [16.6, 12.54])
+    # end of eye contact
+    analysis.plot_kp_variable(stimuli_mapped, 'end_ec')
     # separate plots for multiple variables
-    analysis.plot_kp_variables_or(stimuli_mapped, [{'variable': 'yielding', 'value': '1'},  # noqa: E501
-                                                   {'variable': 'start_ec', 'value': '16.6'},  # noqa: E501
-                                                   {'variable': 'end_ec', 'value': '27.3'}])  # noqa: E501
+    analysis.plot_kp_variables_or(stimuli_mapped, [{'variable': 'yielding', 'value': 1},  # noqa: E501
+                                                   {'variable': 'start_ec', 'value': 16.6},  # noqa: E501
+                                                   {'variable': 'end_ec', 'value': 27.3}])  # noqa: E501
     # multiple variables as a single filter
-    analysis.plot_kp_variables_and(stimuli_mapped, [{'variable': 'yielding', 'value': '1'},  # noqa: E501
-                                                    {'variable': 'start_ec', 'value': '16.6'}])  # noqa: E501
+    analysis.plot_kp_variables_and(stimuli_mapped, [{'variable': 'yielding', 'value': 1},  # noqa: E501
+                                                    {'variable': 'start_ec', 'value': 12.54}])  # noqa: E501
     # create correlation matrix
     analysis.corr_matrix(stimuli_mapped, save_file=True)
     # stimulus durations for all participants
