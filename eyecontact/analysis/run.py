@@ -16,8 +16,8 @@ SAVE_CSV = True  # load csv files with data
 REJECT_CHEATERS = False  # reject cheaters on Appen
 UPDATE_MAPPING = True  # update mapping with keypress data
 RES = 100  # resolution of keypress data plots
-MIN_DUR = 20000  # minimal allowed length of stimulus. -1 for any video length
-MAX_DUR = 35000  # maximal allowed length of stimulus. -1 for any video length
+MIN_DUR = -1  # minimal allowed length of stimulus. -1 for any video length
+MAX_DUR = -1  # maximal allowed length of stimulus. -1 for any video length
 file_coords = 'coords.p'  # file to save lists with coordinates
 file_mapping = 'mapping.p'  # file to save lists with coordinates
 
