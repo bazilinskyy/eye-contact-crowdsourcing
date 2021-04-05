@@ -132,11 +132,11 @@ if __name__ == '__main__':
                                save_file=True)
     # time of participation
     analysis.hist_time_participation(appen_data, save_file=True)
-    # questions
+    # eye contact of driver and pedestrian
     analysis.scatter_questions(appen_data,
                                x='ec_driver',
                                y='ec_pedestrian',
-                               color='year_license',  # noqa: E501
+                               color='year_license',
                                save_file=True)
     # time of participation
     analysis.hist_time_participation(appen_data, save_file=True)
