@@ -169,6 +169,7 @@ if __name__ == '__main__':
                   save_file=True)
     # post-trial questions
     analysis.bar(stimuli_mapped,
+                 x=stimuli_mapped.index,
                  y=['eye_contact', 'intuitive'],
                  show_all_xticks=True,
                  xaxis_title='Video ID',
@@ -176,6 +177,7 @@ if __name__ == '__main__':
                  show_text_labels=True,
                  save_file=True)
     analysis.bar(stimuli_mapped,
+                 x=stimuli_mapped.index,
                  y=['eye_contact'],
                  show_all_xticks=True,
                  xaxis_title='Video ID',
