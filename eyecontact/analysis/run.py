@@ -132,14 +132,29 @@ if __name__ == '__main__':
                                save_file=True)
     # time of participation
     analysis.hist_time_participation(appen_data, save_file=True)
+    # time of participation
+    analysis.hist_time_participation(appen_data, save_file=True)
     # eye contact of driver and pedestrian
     analysis.scatter_questions(appen_data,
                                x='ec_driver',
                                y='ec_pedestrian',
                                color='year_license',
                                save_file=True)
-    # time of participation
-    analysis.hist_time_participation(appen_data, save_file=True)
+    # barchart foq question
+    analysis.barchart_question(appen_data,
+                               x='driving_freq',
+                               color='year_license',
+                               save_file=True)
+    # grouped barchart of DBQ data
+    analysis.grouped_barchart_questions(appen_data,
+                                        ['dbq1_anger',
+                                         'dbq2_speed_motorway',
+                                         'dbq3_speed_residential',
+                                         'dbq4_headway',
+                                         'dbq5_traffic_lights',
+                                         'dbq6_horn',
+                                         'dbq7_mobile'],
+                                        save_file=True)
     # check if any figures are to be rendered
     figures = [manager.canvas.figure
                for manager in

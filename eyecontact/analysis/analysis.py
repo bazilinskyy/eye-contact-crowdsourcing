@@ -257,6 +257,59 @@ class Analysis:
         else:
             fig.show()
 
+    def barchart_question(self, df, x, color=None, save_file=False):
+        """
+        Barplot of all communication data in pre and post-questionaire.
+
+        Args:
+            df (dataframe): dataframe with data from appen.
+            x: column name of dataframe to plot.
+        """
+        logger.info('Creating barchart for x={}', x)
+        # handle nan values
+        # todo: handle ints and strings for nans properly
+        if color:
+            df[color] = df[color].fillna(0)
+        # make barplot
+        fig = px.bar(df, x=x, color=color)
+        # update layout
+        fig.update_layout(template=self.template)
+        # save file
+        if save_file:
+            self.save_plotly(fig,
+                             'barplot_' + ','.join(str(val) for val in x),
+                             self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
+
+    def grouped_barchart_questions(self, df, x, save_file=False):
+        """
+        Barplot of all communication data in pre and post-questionaire.
+
+        Args:
+            df (dataframe): dataframe with data from appen.
+            x: column name of dataframe to plot.
+            save_file (bool, optional): flag for saving an html file with plot.
+        """
+        logger.info('Creating grouped barchart for x={}', x)
+        fig = go.Figure()
+        # add bars for each variable
+        for i in range(len(x)):
+            fig.add_trace(go.Bar(x=df[x[i]].value_counts().index,
+                                 y=df[x[i]].value_counts().values,
+                                 name=x[i]))
+        # update layout
+        fig.update_layout(template=self.template)
+        # save file
+        if save_file:
+            self.save_plotly(fig,
+                             'barplot_' + ','.join(str(val) for val in x),
+                             self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
+
     def scatter_questions(self, df, x, y, color=None, size=None,
                           marginal_x='violin', marginal_y='violin',
                           save_file=True):
