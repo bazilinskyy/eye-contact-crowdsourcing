@@ -389,8 +389,8 @@ class Heroku:
                     'max_dur={}.', self.res, self.min_dur, self.max_dur)
         # array to store all binned rt data in
         mapping_rt = []
-        # loop through all videos
-        for i in range(0, self.num_stimuli):
+        # loop through all stimuli
+        for i in tqdm(range(self.num_stimuli)):
             video_kp = []
             for rep in range(self.num_repeat):
                 # add suffix with repetition ID
@@ -439,8 +439,7 @@ class Heroku:
                             bin_counter = 0
                             for data in rt_data:
                                 # go through all video data to find all data
-                                # within
-                                # specific bin
+                                # within specific bin
                                 if rt - self.res < data <= rt:
                                     # if data is found, up bin counter
                                     bin_counter = bin_counter + 1
@@ -449,15 +448,108 @@ class Heroku:
                                 kp.append(round(percentage * 100))
                             else:
                                 kp.append(0)
-                        # store keypresse from repetition
+                        # store keypresses from repetition
                         video_kp.append(kp)
                         break
-            # calculate mean keypresse from all repetitions
+            # calculate mean keypresses from all repetitions
             kp_mean = [*map(mean, zip(*video_kp))]
             # append data from one video to the mapping array
             mapping_rt.append(kp_mean)
         # update own mapping to include keypress data
         self.mapping['kp'] = mapping_rt
+        # save to csv
+        if self.save_csv:
+            # save to csv
+            self.mapping.to_csv(cs.settings.output_dir + '/' +
+                                self.file_mapping_csv + '.csv')
+        # return new mapping
+        return self.mapping
+
+    def process_post_stimulus_questions(self, questions):
+        """Process questions that follow each stimulus.
+
+        Args:
+            questions (list): list of questions with types of possible values
+                              as int or str.
+
+        Returns:
+            dataframe: updated mapping dataframe.
+        """
+        logger.info('Processing post-stimulus questions')
+        # array in which arrays of video_as data is stored
+        mapping_as = []
+        # loop through all stimuli
+        for i in tqdm(range(self.num_stimuli)):
+            # calculate length of of array with answers
+            length = 0
+            for q in questions:
+                # 1 column required for numeric data
+                # numberic answer, create 1 column to store mean value
+                if q['type'] == 'num':
+                    length = length + 1
+                # strings as answers, create columns to store counts
+                elif q['type'] == 'str':
+                    length = length + len(q['options'])
+                else:
+                    logger.error('Wrong type of data {} in question {}' +
+                                 'provided.', q['type'], q['question'])
+                    return -1
+            # array in which data of a single stimulus is stored
+            answers = [[] for i in range(len(questions))]
+            # for number of repetitions in survey, add extra number
+            for rep in range(self.num_repeat):
+                # add suffix with repetition ID
+                video_as = 'video_' + str(i) + '-as-' + str(rep)
+                video_order = 'video_' + str(i) + '-qs-' + str(rep)
+                # loop over columns
+                for col_name, col_data in self.heroku_data.iteritems():
+                    # when col_name equals video, then check
+                    if col_name == video_as:
+                        # loop over rows in column
+                        for row_index, row in enumerate(col_data):
+                            # filter out empty values
+                            if type(row) == list:
+                                order = self.heroku_data.iloc[row_index][video_order]  # noqa: E501
+                                # check if injection question is present
+                                if 'injection' in order:
+                                    # delete injection
+                                    del row[order.index('injection')]
+                                    del order[order.index('injection')]
+                                # loop through questions
+                                for i, q in enumerate(questions):
+                                    # extract answer
+                                    ans = row[order.index(q['question'])]
+                                    # store answer from repetition
+                                    answers[i].append(ans)
+            # calculate mean answers from all repetitions for numeric questions
+            for i, q in enumerate(questions):
+                if q['type'] == 'num':
+                    answers[i] = np.mean([float(i) for i in answers[i]])
+            # save video data in array
+            mapping_as.append(answers)
+        # add column with data to current mapping file
+        for i, q in enumerate(questions):
+            # extract answers for the given question
+            q_ans = [item[i] for item in mapping_as]
+            # for numeric question, add column with mean values
+            if q['type'] == 'num':
+                self.mapping[q['question']] = q_ans
+            # for textual question, add columns with counts of each value
+            else:
+                # go over options and count answers with the option for each
+                # stimulus
+                for option in q['options']:
+                    # store counts in list
+                    count_option = []
+                    # go over each answer
+                    for ans in q_ans:
+                        # add count for answers for the given option
+                        count_option.append(ans.count(option))
+                    # build name of column
+                    col_name = q['question'] + '-' + option.replace(' ', '_')
+                    col_name = col_name.lower()
+                    # add to mapping
+                    self.mapping[col_name] = count_option
         # save to csv
         if self.save_csv:
             # save to csv

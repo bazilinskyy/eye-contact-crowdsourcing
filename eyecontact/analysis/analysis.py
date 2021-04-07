@@ -38,6 +38,8 @@ class Analysis:
         self.template = cs.common.get_configs('plotly_template')
         # store resolution for keypress data
         self.res = cs.common.get_configs('kp_resolution')
+        # number of stimuli
+        self.num_stimuli = cs.common.get_configs('num_stimuli')
 
     def corr_matrix(self, df, save_file=False):
         """
@@ -89,29 +91,397 @@ class Analysis:
         # revert font
         self.reset_font()
 
-    def hist_stim_duration(self, df, nbins=0, save_file=True):
+    def communication(self, df, pre_q, post_qs, save_file=False):
         """
-        Output distribution of stimulus durations.
+        Barplot of all communication data in pre and post-questionaire
+
+        Args:
+            df (dataframe): dataframe with data from appen
+            pre_q: column name of pre-questionairre data
+            post_qs: names to show in graph of post-questionaire data
+            save_file (bool, optional): flag for saving an html file with plot.
+        """
+        logger.info('Creating visualisation of communication questions')
+        options = ['completely_disagree',
+                   'disagree',
+                   'neither_disagree_nor_agree',
+                   'agree',
+                   'completely_agree',
+                   'i_prefer_not_to_respond'
+                   ]
+        importance = 0.0
+        counts = 0
+        # get unique values + counts
+        comm_data = df[pre_q].value_counts()
+        # loop over all data in column of choice
+        for i, data in enumerate(comm_data.values):
+            # Match options to array, for order purposes
+            for j, data2 in enumerate(options):
+                if comm_data.index[i] == data2 and j < (len(options) - 1):
+                    # quantify options by string matching
+                    importance = importance + \
+                        (j / (len(options) - 2) * data)
+                    counts = counts + data
+        # average quantification of values
+        importance = [(importance / counts) * 100]
+        # name to plot with. Could be taken as an argument in function
+        importance_name = 'Communication between driver and pedestrian is' + \
+                          ' important for road safety'
+        pe_data = np.array([0.0] * len(df['end-as-0'][0]))
+        for i, data in enumerate(df['end-as-0'][df['end-as-0'].notnull()]):
+            # create numpy array for adding vectors
+            data = np.asfarray(data, float)
+            pe_data = pe_data + data
+        # calculate average value of post-experiment questionairre data
+        pe_data = (pe_data / (i + 1))
+        fig = go.Figure(data=[
+            go.Bar(name=importance_name,
+                   x=[importance_name],
+                   y=importance),
+            go.Bar(name='Which behaviour increases feeling of safety?',
+                   x=post_qs,
+                   y=pe_data)
+        ])
+        # update layout
+        fig.update_layout(template=self.template,
+                          yaxis_range=[0, 100])
+        # save file
+        if save_file:
+            self.save_plotly(fig,
+                             'communication',
+                             self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
+
+    def bar(self, df, y: list, x=None, stacked=False, pretty_ticks=False,
+            orientation='v', xaxis_title=None, yaxis_title=None,
+            show_all_xticks=False, show_all_yticks=False,
+            show_text_labels=False, save_file=False):
+        """
+        Barplot for questionnaire data. Passing a list with one variable will
+        output a simple barplot; passing a list of variables will output a
+        grouped barplot.
+
+        Args:
+            df (dataframe): dataframe with data from appen.
+            y (list): column names of dataframe to plot.
+            x (list): values in index of dataframe to plot for.
+            stacked (bool, optional): show as stacked chart.
+            pretty_ticks (bool, optional): prettify ticks by replacing _ with
+                                           spaces and capitilisng each value.
+            orientation (str, optional): orientation of bars. v=vertical,
+                                         h=horizontal.
+            xaxis_title (str, optional): title for x axis.
+            yaxis_title (str, optional): title for y axis.
+            show_all_xticks (bool, optional): show all ticks on x axis.
+            show_all_yticks (bool, optional): show all ticks on y axis.
+            show_text_labels (bool, optional): output automatically positionsed
+                                               text labels.
+            save_file (bool, optional): flag for saving an html file with plot.
+        """
+        logger.info('Creating bar chart for x={} and y={}', x, y)
+        # prettify ticks
+        if pretty_ticks:
+            # if x is given
+            if x:
+                for variable in x:
+                    # check if column contains strings
+                    if isinstance(df.iloc[0][variable], str):
+                        # replace underscores with spaces
+                        df[variable] = df[variable].str.replace('_', ' ')
+                        # capitlise
+                        df[variable] = df[variable].str.capitalize()
+            for variable in y:
+                # check if column contains strings
+                if isinstance(df.iloc[0][variable], str):
+                    # replace underscores with spaces
+                    df[variable] = df[variable].str.replace('_', ' ')
+                    # capitlise
+                    df[variable] = df[variable].str.capitalize()
+        # create figure
+        fig = go.Figure()
+        # go over variables to plot
+        for variable in y:
+            # showing text labels
+            if show_text_labels:
+                text = df[variable]
+            else:
+                text = None
+            # x values were given
+            if x:
+                fig.add_trace(go.Bar(x=df[x],
+                                     y=df[variable],
+                                     name=variable,
+                                     orientation=orientation,
+                                     text=text,
+                                     textposition='auto'))
+            # x values were not given, plot against index
+            else:
+                fig.add_trace(go.Bar(y=df[variable],
+                                     name=variable,
+                                     orientation=orientation,
+                                     text=text,
+                                     textposition='auto'))
+        # add tabs if multiple variables are plotted
+        if len(y) > 1:
+            fig.update_layout(barmode='group')
+            buttons = list([dict(label='All',
+                                 method='update',
+                                 args=[{'visible': [True] * df[y].shape[0]},
+                                       {'title': 'All',
+                                       'showlegend': True}])])
+            # counter for traversing through stimuli
+            counter_rows = 0
+            for variable in y:
+                visibility = [[counter_rows == j] for j in range(len(y))]
+                visibility = [item for sublist in visibility for item in sublist]  # noqa: E501
+                button = dict(label=variable,
+                              method='update',
+                              args=[{'visible': visibility},
+                                    {'title': variable}])
+                buttons.append(button)
+                counter_rows = counter_rows + 1
+            updatemenus = [dict(x=-0.15, buttons=buttons, showactive=True)]
+            fig['layout']['updatemenus'] = updatemenus
+            fig['layout']['title'] = 'All'
+        # update layout
+        fig.update_layout(template=self.template,
+                          xaxis_title=xaxis_title,
+                          yaxis_title=yaxis_title)
+        # format text labels
+        if show_text_labels:
+            fig.update_traces(texttemplate='%{text:.2s}')
+        # show all ticks on x axis
+        if show_all_xticks:
+            fig.update_layout(xaxis=dict(dtick=1))
+        # show all ticks on x axis
+        if show_all_yticks:
+            fig.update_layout(yaxis=dict(dtick=1))
+        # stacked bar chart
+        if stacked:
+            fig.update_layout(barmode='stack')
+        # save file
+        if save_file:
+            # x values were given
+            if x:
+                file_name = 'bar_' + ','.join(str(val) for val in x) + '_' + \
+                            ','.join(str(val) for val in y)
+            # x values were not given
+            else:
+                file_name = 'bar_' + ','.join(str(val) for val in y)
+            self.save_plotly(fig,
+                             file_name,
+                             self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
+
+    def scatter(self, df, x, y, color=None, size=None, pretty_ticks=False,
+                marginal_x='violin', marginal_y='violin', xaxis_title=None,
+                yaxis_title=None, save_file=True):
+        """
+        Output scatter plot of variables x and y with optinal assignment of
+        colour and size.
 
         Args:
             df (dataframe): dataframe with data from heroku.
-            nbins (int, optional): number of bins in histogram.
+            x (str): dataframe column to plot on x axis.
+            y (str): dataframe column to plot on y axis.
+            color (str, optional): dataframe column to assign color of circles.
+            size (str, optional):  dataframe column to assign soze of circles.
+            pretty_ticks (bool, optional): prettify ticks by replacing _ with
+                                           spaces and capitilisng each value.
+            marginal_x (str, optional): type of marginal on x axis. Can be
+                                        'histogram', 'rug', 'box', or 'violin'.
+            marginal_y (str, optional): type of marginal on y axis. Can be
+                                        'histogram', 'rug', 'box', or 'violin'.
+            xaxis_title (str, optional): title for x axis.
+            yaxis_title (str, optional): title for y axis.
             save_file (bool, optional): flag for saving an html file with plot.
         """
-        logger.info('Creating histogram of stimulus durations.')
-        df = df[df.columns[df.columns.to_series().str.contains('-dur')]]
-        # create figure
-        if nbins:
-            fig = px.histogram(df, nbins=nbins, marginal='rug')
+        # todo: add trendline
+        logger.info('Creating scatter plot for x={} and y={}.',
+                    x, y)
+        # handle nan values
+        # strings detected
+        if color and isinstance(df.iloc[0][color], str):
+            df[color] = df[color].fillna('NaN')
+        # not strings detected, assuming numeric data
+        elif color and not isinstance(df.iloc[0][color], str):
+            df[color] = df[color].fillna(0)
+        # strings detected
+        if size and isinstance(df.iloc[0][size], str):
+            df[size] = df[size].fillna('NaN')
+        # not strings detected, assuming numeric data
+        elif size and not isinstance(df.iloc[0][size], str):
+            df[size] = df[size].fillna(0)
+        # prettify ticks
+        if pretty_ticks:
+            if isinstance(df.iloc[0][x], str):  # check if string
+                # replace underscores with spaces
+                df[x] = df[x].str.replace('_', ' ')
+                # capitlise
+                df[x] = df[x].str.capitalize()
+            if isinstance(df.iloc[0][y], str):  # check if string
+                # replace underscores with spaces
+                df[y] = df[y].str.replace('_', ' ')
+                # capitlise
+                df[y] = df[y].str.capitalize()
+            if color and isinstance(df.iloc[0][color], str):  # check if string
+                # replace underscores with spaces
+                df[color] = df[color].str.replace('_', ' ')
+                # capitlise
+                df[color] = df[color].str.capitalize()
+            if size and isinstance(df.iloc[0][size], str):  # check if string
+                # replace underscores with spaces
+                df[size] = df[size].str.replace('_', ' ')
+                # capitlise
+                df[size] = df[size].str.capitalize()
+        # scatter plot with histograms
+        fig = px.scatter(df,
+                         x=x,
+                         y=y,
+                         marginal_x=marginal_x,
+                         marginal_y=marginal_y,
+                         color=color,
+                         size=size)
+
+        # update layout
+        fig.update_layout(template=self.template,
+                          xaxis_title=xaxis_title,
+                          yaxis_title=yaxis_title)
+        # save file
+        if save_file:
+            self.save_plotly(fig,
+                             'scatter_' + x + ',' + y,
+                             self.folder)
+        # open it in localhost instead
         else:
-            fig = px.histogram(df, marginal='rug')
+            fig.show()
+
+    def heatmap(self, df, x, y, pretty_ticks=False, marginal_x='violin',
+                marginal_y='violin', xaxis_title=None, yaxis_title=None,
+                save_file=True):
+        """
+        Output heatmap plot of variables x and y.
+
+        Args:
+            df (dataframe): dataframe with data from heroku.
+            x (str): dataframe column to plot on x axis.
+            y (str): dataframe column to plot on y axis.
+            pretty_ticks (bool, optional): prettify ticks by replacing _ with
+                                           spaces and capitilisng each value.
+            marginal_x (str, optional): type of marginal on x axis. Can be
+                                        'histogram', 'rug', 'box', or 'violin'.
+            marginal_y (str, optional): type of marginal on y axis. Can be
+                                        'histogram', 'rug', 'box', or 'violin'.
+            xaxis_title (str, optional): title for x axis.
+            yaxis_title (str, optional): title for y axis.
+            save_file (bool, optional): flag for saving an html file with plot.
+        """
+        logger.info('Creating heatmap for x={} and y={}.',
+                    x, y)
+        # prettify ticks
+        if pretty_ticks:
+            if isinstance(df.iloc[0][x], str):  # check if string
+                # replace underscores with spaces
+                df[x] = df[x].str.replace('_', ' ')
+                # capitlise
+                df[x] = df[x].str.capitalize()
+            if isinstance(df.iloc[0][y], str):  # check if string
+                # replace underscores with spaces
+                df[y] = df[y].str.replace('_', ' ')
+                # capitlise
+                df[y] = df[y].str.capitalize()
+        # density map with histograms
+        fig = px.density_heatmap(df,
+                                 x=x,
+                                 y=y,
+                                 marginal_x='violin',
+                                 marginal_y='violin')
+        # update layout
+        fig.update_layout(template=self.template,
+                          xaxis_title=xaxis_title,
+                          yaxis_title=yaxis_title)
+        # save file
+        if save_file:
+            self.save_plotly(fig,
+                             'heatmap_' + x + ',' + y,
+                             self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
+
+    def hist(self, df, x, nbins=None, color=None, pretty_ticks=False,
+             marginal='rug', xaxis_title=None, yaxis_title=None,
+             save_file=True):
+        """
+        Output histogram of time of participation.
+
+        Args:
+            df (dataframe): dataframe with data from heroku.
+            x (list): column names of dataframe to plot.
+            nbins (int, optional): number of bins in histogram.
+            color (str, optional): dataframe column to assign color of circles.
+            pretty_ticks (bool, optional): prettify ticks by replacing _ with
+                                           spaces and capitilisng each value.
+            marginal (str, optional): type of marginal on x axis. Can be
+                                        'histogram', 'rug', 'box', or 'violin'.
+            xaxis_title (str, optional): title for x axis.
+            yaxis_title (str, optional): title for y axis.
+            save_file (bool, optional): flag for saving an html file with plot.
+        """
+        logger.info('Creating histogram for x={}.', x)
+        # using colour with multiple values to plot not supported
+        if color and len(x) > 1:
+            logger.error('Color property can be used only with a single' +
+                         ' variable to plot.')
+            return -1
+        # handle nans
+        # strings detected
+        if isinstance(df.iloc[0][x[0]], str):
+            df[x] = df[x].fillna('NaN')
+        # not strings detected, assuming numeric data
+        elif not isinstance(df.iloc[0][x[0]], str):
+            df[x] = df[x].fillna(0)
+        # strings detected
+        if color and isinstance(df.iloc[0][color], str):
+            df[color] = df[color].fillna('NaN')
+        # not strings detected, assuming numeric data
+        elif color and not isinstance(df.iloc[0][color], str):
+            df[color] = df[color].fillna(0)
+        # prettify ticks
+        if pretty_ticks:
+            for variable in x:
+                # check if column contains strings
+                if isinstance(df.iloc[0][variable], str):
+                    # replace underscores with spaces
+                    df[variable] = df[variable].str.replace('_', ' ')
+                    # capitlise
+                    df[variable] = df[variable].str.capitalize()
+            if color and isinstance(df.iloc[0][color], str):  # check if string
+                # replace underscores with spaces
+                df[color] = df[color].str.replace('_', ' ')
+                # capitlise
+                df[color] = df[color].str.capitalize()
+        # create figure
+        if color:
+            fig = px.histogram(df[x], nbins=nbins, marginal=marginal,
+                               color=df[color])
+        else:
+            fig = px.histogram(df[x], nbins=nbins, marginal=marginal)
         # ticks as numbers
         fig.update_layout(xaxis=dict(tickformat='digits'))
         # update layout
-        fig.update_layout(template=self.template)
+        fig.update_layout(template=self.template,
+                          xaxis_title=xaxis_title,
+                          yaxis_title=yaxis_title)
         # save file
         if save_file:
-            self.save_plotly(fig, 'hist_stim_duration', self.folder)
+            self.save_plotly(fig,
+                             'hist_' + ','.join(str(val) for val in x),
+                             self.folder)
         # open it in localhost instead
         else:
             fig.show()
@@ -155,7 +525,6 @@ class Analysis:
         fig.update_layout(template=self.template)
         # save file
         if save_file:
-
             self.save_plotly(fig,
                              'hist_stim_duration' +
                              ','.join(t['start'].strftime('%m.%d.%Y,%H:%M:%S') +  # noqa: E501
@@ -167,236 +536,9 @@ class Analysis:
         else:
             fig.show()
 
-    def hist_time_participation(self, df, nbins=0, save_file=True):
-        """
-        Output histogram of time of participation.
-
-        Args:
-            df (dataframe): dataframe with data from heroku.
-            nbins (int, optional): number of bins in histogram.
-            save_file (bool, optional): flag for saving an html file with plot.
-        """
-        logger.info('Creating histogram of time of study.')
-        # cater for missing country
-        df['country'] = df['country'].fillna('NaN')
-        # create figure
-        if nbins:
-            fig = px.histogram(df,
-                               x='time',
-                               nbins=nbins,
-                               marginal='rug',
-                               color='country')
-        else:
-            fig = px.histogram(df, x='time', marginal='rug', color='country')
-        # ticks as numbers
-        fig.update_layout(xaxis=dict(tickformat='digits'))
-        # update layout
-        fig.update_layout(template=self.template)
-        # save file
-        if save_file:
-            self.save_plotly(fig, 'hist_time_participation', self.folder)
-        # open it in localhost instead
-        else:
-            fig.show()
-
-    def hist_browser_dimensions(self, df, nbins=0, save_file=True):
-        """
-        Output distribution of browser dimensions.
-
-        Args:
-            df (dataframe): dataframe with data from heroku.
-            nbins (int, optional): number of bins in histogram.
-            save_file (bool, optional): flag for saving an html file with plot.
-        """
-        logger.info('Creating histogram of window dimensions.')
-        df['window_area'] = df['window_height'] * df['window_width']
-        # plotly
-        fig = subplots.make_subplots(rows=1,
-                                     cols=1,
-                                     shared_xaxes=True)
-        # variables to plot
-        variables = ['window_height', 'window_width', 'window_area']
-        data = df[variables]
-        # plot each variable in data
-        for i, variable in enumerate(variables):
-            if nbins:
-                fig.add_trace(go.Histogram(x=df[variable],
-                                           nbinsx=nbins,
-                                           name=variable),
-                              row=1,
-                              col=1)
-            else:
-                fig.add_trace(go.Histogram(x=df[variable],
-                                           name=variable),
-                              row=1,
-                              col=1)
-        buttons = list([dict(label='All',
-                             method='update',
-                             args=[{'visible': [True] * 3 * len(variables)},
-                                   {'title': 'All',
-                                    'showlegend': True}])])
-        for i, label in enumerate(variables):
-            visibility = [[i == j] for j in range(len(variables))]
-            visibility = [item for sublist in visibility for item in sublist]
-            button = dict(label=label,
-                          method='update',
-                          args=[{'visible': visibility},
-                                {'title': label}])
-            buttons.append(button)
-        updatemenus = [dict(x=-0.15, buttons=buttons, showactive=True)]
-        # ticks as numbers
-        fig.update_layout(xaxis=dict(tickformat='digits'))
-        # update layout
-        fig['layout']['title'] = 'Title'
-        # fig['layout']['showlegend'] = True
-        fig['layout']['updatemenus'] = updatemenus
-        fig.update_layout(template=self.template)
-        # save file
-        if save_file:
-            self.save_plotly(fig, 'hist_browser_dimensions', self.folder)
-        # open it in localhost instead
-        else:
-            fig.show()
-
-    def barchart_question(self, df, x, color=None, save_file=False):
-        """
-        Barplot of all communication data in pre and post-questionaire.
-
-        Args:
-            df (dataframe): dataframe with data from appen.
-            x: column name of dataframe to plot.
-        """
-        logger.info('Creating barchart for x={}', x)
-        # handle nan values
-        # todo: handle ints and strings for nans properly
-        if color:
-            df[color] = df[color].fillna(0)
-        # make barplot
-        fig = px.bar(df, x=x, color=color)
-        # update layout
-        fig.update_layout(template=self.template)
-        # save file
-        if save_file:
-            self.save_plotly(fig,
-                             'barplot_' + ','.join(str(val) for val in x),
-                             self.folder)
-        # open it in localhost instead
-        else:
-            fig.show()
-
-    def grouped_barchart_questions(self, df, x, save_file=False):
-        """
-        Barplot of all communication data in pre and post-questionaire.
-
-        Args:
-            df (dataframe): dataframe with data from appen.
-            x: column name of dataframe to plot.
-            save_file (bool, optional): flag for saving an html file with plot.
-        """
-        logger.info('Creating grouped barchart for x={}', x)
-        fig = go.Figure()
-        # add bars for each variable
-        for i in range(len(x)):
-            fig.add_trace(go.Bar(x=df[x[i]].value_counts().index,
-                                 y=df[x[i]].value_counts().values,
-                                 name=x[i]))
-        # update layout
-        fig.update_layout(template=self.template)
-        # save file
-        if save_file:
-            self.save_plotly(fig,
-                             'barplot_' + ','.join(str(val) for val in x),
-                             self.folder)
-        # open it in localhost instead
-        else:
-            fig.show()
-
-    def scatter_questions(self, df, x, y, color=None, size=None,
-                          marginal_x='violin', marginal_y='violin',
-                          save_file=True):
-        """
-        Output scatter plot of variables x and y with optinal assignment of
-        colour and size.
-
-        Args:
-            df (dataframe): dataframe with data from heroku.
-            x (str): dataframe column to plot on x axis.
-            y (str): dataframe column to plot on y axis.
-            color (str, optional): dataframe column to assign color of circles.
-            size (str, optional):  dataframe column to assign soze of circles.
-            marginal_x (str, optional): type of marginal on x axis. Can be
-                                        'histogram', 'rug', 'box', or 'violin'.
-            marginal_y (str, optional): type of marginal on y axis. Can be
-                                        'histogram', 'rug', 'box', or 'violin'.
-            save_file (bool, optional): flag for saving an html file with plot.
-        """
-        # todo: add trendline
-        logger.info('Creating scatter plot for x={} and y={}.',
-                    x, y)
-        # handle nan values
-        # todo: handle ints and strings for nans properly
-        if color:
-            df[color] = df[color].fillna(0)
-        if size:
-            df[size] = df[size].fillna(0)
-        # scatter plot with histograms
-        fig = px.scatter(df,
-                         x=x,
-                         y=y,
-                         marginal_x=marginal_x,
-                         marginal_y=marginal_y,
-                         color=color,
-                         size=size)
-
-        # update layout
-        fig.update_layout(template=self.template)
-        # save file
-        if save_file:
-            self.save_plotly(fig,
-                             'scatter_' + x + ',' + y,
-                             self.folder)
-        # open it in localhost instead
-        else:
-            fig.show()
-
-    def heatmap_questions(self, df, x, y,
-                          marginal_x='violin', marginal_y='violin',
-                          save_file=True):
-        """
-        Output heatmpan plot of variables x and y.
-
-        Args:
-            df (dataframe): dataframe with data from heroku.
-            x (str): dataframe column to plot on x axis.
-            y (str): dataframe column to plot on y axis.
-            color (str, optional): dataframe column to assign color of circles.
-            size (str, optional):  dataframe column to assign soze of circles.
-            marginal_x (str, optional): Description
-            save_file (bool, optional): flag for saving an html file with plot.
-        """
-        logger.info('Creating heatmap for x={} and y={}.',
-                    x, y)
-        # density map with histograms
-        fig = px.density_heatmap(df,
-                                 x='window_width',
-                                 y='window_height',
-                                 marginal_x='violin',
-                                 marginal_y='violin')
-        # update layout
-        fig.update_layout(template=self.template)
-        # save file
-        if save_file:
-            self.save_plotly(fig,
-                             'heatmap_' + x + ',' + y,
-                             self.folder)
-        # open it in localhost instead
-        else:
-            fig.show()
-
-    def plot_kp(self, df,
-                xaxis_title='Time (s)',
-                yaxis_title='Percentage of trials with response key pressed',
-                save_file=True):
+    def plot_kp(self, df, save_file=True,
+                xaxis_title='Time (ms)',
+                yaxis_title='Percentage of trials with response key pressed'):
         """Take in a variable with values which are optional
 
         Args:
@@ -432,7 +574,7 @@ class Analysis:
             fig.show()
 
     def plot_kp_video(self, df, stimulus, extention='mp4',
-                      xaxis_title='Time (s)',
+                      xaxis_title='Time (ms)',
                       yaxis_title='Percentage of trials with ' +
                                   'response key pressed',
                       save_file=True):
@@ -465,7 +607,7 @@ class Analysis:
         else:
             fig.show()
 
-    def plot_kp_videos(self, df, xaxis_title='Time (s)',
+    def plot_kp_videos(self, df, xaxis_title='Time (ms)',
                        yaxis_title='Percentage of trials with ' +
                                    'response key pressed',
                        save_file=True):
@@ -524,7 +666,7 @@ class Analysis:
             fig.show()
 
     def plot_kp_variable(self, df, variable, values=None,
-                         xaxis_title='Time (s)',
+                         xaxis_title='Time (ms)',
                          yaxis_title='Percentage of trials with ' +
                                      'response key pressed',
                          save_file=True):
@@ -609,7 +751,7 @@ class Analysis:
         else:
             fig.show()
 
-    def plot_kp_variables_or(self, df, variables, xaxis_title='Time (s)',
+    def plot_kp_variables_or(self, df, variables, xaxis_title='Time (ms)',
                              yaxis_title='Percentage of trials with ' +
                                          'response key pressed',
                              save_file=True):
@@ -688,7 +830,7 @@ class Analysis:
             fig.show()
 
     def plot_kp_variables_and(self, df, variables,
-                              xaxis_title='Time (s)',
+                              xaxis_title='Time (ms)',
                               yaxis_title='Percentage of trials with ' +
                                           'response key pressed',
                               save_file=True):
@@ -738,6 +880,43 @@ class Analysis:
         else:
             fig.show()
 
+    def danger_values(self, df, save_file=True):
+        """Plotting danger values of post-trial data.
+
+        Args:
+            df (dataframe): dataframe containing mappping data
+        """
+        # todo: add optional column with values, to filter specific data
+        # create array with names of the data
+        name_array = []
+        for i in range(0, self.num_stimuli):
+            name_array.append('video_' + str(i))
+        # go through all data of a single video
+        vid_data = []
+        for index, row in df.iterrows():
+            # go through array to get data
+            avg_danger = 0
+            for counter, data in enumerate(row['as']):
+                # add all danger values in one
+                avg_danger = avg_danger + int(data[0])
+            # calculate average danger value per vid and append to array
+            # counter starts add 0, so add 1
+            avg_danger = avg_danger / (counter + 1)
+            vid_data.append(avg_danger)
+        fig = go.Figure(data=[go.Bar(name='Danger values',
+                                     x=name_array,
+                                     y=vid_data)])
+        # update layout
+        fig.update_layout(template=self.template,
+                          yaxis_range=[0, 100],
+                          yaxis_title="Level of danger")
+        # save file
+        if save_file:
+            self.save_plotly(fig, 'danger_values', self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
+
     def save_plotly(self, fig, name, output_subdir):
         """
         Helper function to save figure as html file.
@@ -751,6 +930,9 @@ class Analysis:
         path = cs.settings.output_dir + output_subdir
         if not os.path.exists(path):
             os.makedirs(path)
+        # limit name to 255 char
+        if len(path) + len(name) > 250:
+            name = name[:255-len(path)-5]
         file_plot = os.path.join(path + name + '.html')
         # save to file
         py.offline.plot(fig, filename=file_plot)

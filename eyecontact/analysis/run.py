@@ -63,8 +63,13 @@ if __name__ == '__main__':
     if UPDATE_MAPPING:
         # read in mapping of stimuli
         stimuli_mapped = heroku.read_mapping()
-        # read in mapping of stimuli
+        # process keypresses and update mapping
         stimuli_mapped = heroku.process_kp()
+        # process post-trial questions and update mapping
+        questions = [{'question': 'eye_contact', 'type': 'num'},
+                     {'question': 'intuitive', 'type': 'num'}]
+        stimuli_mapping = heroku.process_post_stimulus_questions(questions)
+        # export to pickle
         cs.common.save_to_p(file_mapping,
                             stimuli_mapped,
                             'mapping with keypress data')
@@ -95,8 +100,14 @@ if __name__ == '__main__':
                                                     {'variable': 'start_ec', 'value': 12.54}])  # noqa: E501
     # create correlation matrix
     analysis.corr_matrix(stimuli_mapped, save_file=True)
-    # stimulus durations for all participants
-    analysis.hist_stim_duration(heroku_data, nbins=100, save_file=True)
+    # create correlation matrix
+    analysis.corr_matrix(stimuli_mapped, save_file=True)
+    # stimulus duration
+    analysis.hist(heroku_data,
+              x=heroku_data.columns[heroku_data.columns.to_series().str.contains('-dur')],  # noqa: E501
+              nbins=100,
+              pretty_ticks=True,
+              save_file=True)
     # stimulus durations for 2 time periods
     time_ranges = [  # 1st pilot
                    {'start': dt.datetime(2021, 3, 16, 00, 00, 00, 000,
@@ -116,41 +127,61 @@ if __name__ == '__main__':
                                      nbins=100,
                                      save_file=True)
     # browser window dimensions
-    # analysis.hist_browser_dimensions(heroku_data, nbins=100, save_file=True)
-    analysis.scatter_questions(heroku_data,
-                               x='window_width',
-                               y='window_height',
-                               color='browser_name',
-                               save_file=True)
-    analysis.heatmap_questions(heroku_data,
-                               x='window_width',
-                               y='window_height',
-                               save_file=True)
+    analysis.scatter(heroku_data,
+                     x='window_width',
+                     y='window_height',
+                     color='browser_name',
+                     pretty_ticks=True,
+                     save_file=True)
+    analysis.heatmap(heroku_data,
+                     x='window_width',
+                     y='window_height',
+                     pretty_ticks=True,
+                     save_file=True)
     # time of participation
-    analysis.hist_time_participation(appen_data, save_file=True)
-    # time of participation
-    analysis.hist_time_participation(appen_data, save_file=True)
+    analysis.hist(appen_data,
+                  x=['time'],
+                  color='country',
+                  save_file=True)
     # eye contact of driver and pedestrian
-    analysis.scatter_questions(appen_data,
-                               x='ec_driver',
-                               y='ec_pedestrian',
-                               color='year_license',
-                               save_file=True)
-    # barchart foq question
-    analysis.barchart_question(appen_data,
-                               x='driving_freq',
-                               color='year_license',
-                               save_file=True)
+    analysis.scatter(appen_data,
+                     x='ec_driver',
+                     y='ec_pedestrian',
+                     color='year_license',
+                     pretty_ticks=True,
+                     save_file=True)
+    # histogram for driving frequency
+    analysis.hist(appen_data,
+                  x=['driving_freq'],
+                  pretty_ticks=True,
+                  save_file=True)
     # grouped barchart of DBQ data
-    analysis.grouped_barchart_questions(appen_data,
-                                        ['dbq1_anger',
-                                         'dbq2_speed_motorway',
-                                         'dbq3_speed_residential',
-                                         'dbq4_headway',
-                                         'dbq5_traffic_lights',
-                                         'dbq6_horn',
-                                         'dbq7_mobile'],
-                                        save_file=True)
+    analysis.hist(appen_data,
+                  x=['dbq1_anger',
+                     'dbq2_speed_motorway',
+                     'dbq3_speed_residential',
+                     'dbq4_headway',
+                     'dbq5_traffic_lights',
+                     'dbq6_horn',
+                     'dbq7_mobile'],
+                  marginal='violin',
+                  pretty_ticks=True,
+                  save_file=True)
+    # post-trial questions
+    analysis.bar(stimuli_mapped,
+                 y=['eye_contact', 'intuitive'],
+                 show_all_xticks=True,
+                 xaxis_title='Video ID',
+                 yaxis_title='Score',
+                 show_text_labels=True,
+                 save_file=True)
+    analysis.bar(stimuli_mapped,
+                 y=['eye_contact'],
+                 show_all_xticks=True,
+                 xaxis_title='Video ID',
+                 yaxis_title='Score',
+                 show_text_labels=True,
+                 save_file=True)
     # check if any figures are to be rendered
     figures = [manager.canvas.figure
                for manager in
