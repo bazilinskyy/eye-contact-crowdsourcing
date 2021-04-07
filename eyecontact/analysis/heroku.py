@@ -47,18 +47,19 @@ class Heroku:
     default_dur = 0
 
     def __init__(self,
-                 res: int,
                  files_data: list,
                  save_p: bool,
                  load_p: bool,
                  save_csv: bool):
-        self.res = res
         self.files_data = files_data
         self.save_p = save_p
         self.load_p = load_p
         self.save_csv = save_csv
         self.num_stimuli = cs.common.get_configs('num_stimuli')
         self.num_repeat = cs.common.get_configs('num_repeat')
+        self.res = cs.common.get_configs('kp_resolution')
+        self.min_dur = cs.common.get_configs('min_stimulus_duration')
+        self.max_dur = cs.common.get_configs('max_stimulus_duration')
 
     def set_data(self, heroku_data):
         """
@@ -374,7 +375,7 @@ class Heroku:
         # return mapping as a dataframe
         return df
 
-    def process_kp(self, min_dur=-1, max_dur=-1):
+    def process_kp(self):
         """Process keypresses for resolution self.res.
 
         Returns:
@@ -385,8 +386,7 @@ class Heroku:
             max_dur (int, optional): miximal allowed duration of video.
         """
         logger.info('Processing keypress data with res={} ms, min_dur={}, ' +
-                    'max_dur={}.',
-                    self.res, min_dur, max_dur)
+                    'max_dur={}.', self.res, self.min_dur, self.max_dur)
         # array to store all binned rt data in
         mapping_rt = []
         # loop through all videos
@@ -406,10 +406,10 @@ class Heroku:
                         # loop through rows in column
                         for row_index, row in enumerate(col_data):
                             # consider only videos of allowed length
-                            if min_dur >= 0 and max_dur >= 0 \
+                            if self.min_dur >= 0 and self.max_dur >= 0 \
                               and video_dur in self.heroku_data.keys():
                                 dur = self.heroku_data.iloc[row_index][video_dur]  # noqa: E501
-                                if dur < min_dur or dur > max_dur:
+                                if dur < self.min_dur or dur > self.max_dur:
                                     continue
                             # check if data is string to filter out nan data
                             if type(row) == list:
@@ -473,10 +473,11 @@ class Heroku:
         """
         # load mapping of codes and coordinates
         logger.info('Filtering heroku data.')
-        # 1. People who made mistakes in injected questions
-        logger.info('Filter-h1. People who made mistakes in injected '
-                    + 'questions.')
+        # fetch allowed number of mistakes
         allowed_mistakes = cs.common.get_configs('allowed_mistakes_injections')  # noqa: E501
+        # 1. People who made mistakes in injected questions
+        logger.info('Filter-h1. People who made more than {} mistakes in '
+                    + 'injected questions.', allowed_mistakes)
         # injection questions
         injections = cs.common.get_configs('injections')
         # answers to injected questions
