@@ -15,7 +15,7 @@ LOAD_P = False  # load pickle files with data
 SAVE_CSV = True  # load csv files with data
 REJECT_CHEATERS = False  # reject cheaters on Appen
 UPDATE_MAPPING = True  # update mapping with keypress data
-SHOW_OUTPUT = True  # shoud figures
+SHOW_OUTPUT = False  # shoud figures
 file_coords = 'coords.p'  # file to save lists with coordinates
 file_mapping = 'mapping.p'  # file to save lists with coordinates
 

@@ -320,19 +320,16 @@ class Heroku:
                             continue
                         # new value
                         if key + '-0' not in data_dict[dict_row['worker_code']].keys():  # noqa: E501
+                            print('new key', key + '-0')
                             data_dict[dict_row['worker_code']][key + '-0'] = value   # noqa: E501
                         # update old value
                         else:
-                            # udpate only if the ites from the first repetition
-                            # is a list
-                            if isinstance(data_dict[dict_row['worker_code']][key + '-0'], list):  # noqa: E501
-                                # traverse repetition ids untill get new
-                                # repetition
-                                for rep in range(0, self.num_repeat):
-                                    # build new key with id of repetition
-                                    new_key = key + '-' + str(rep)
-                                    if new_key not in data_dict[dict_row['worker_code']].keys():  # noqa: E501
-                                        data_dict[dict_row['worker_code']][new_key] = value  # noqa: E501
+                            # traverse repetition ids untill get new repetition
+                            for rep in range(0, self.num_repeat):
+                                # build new key with id of repetition
+                                new_key = key + '-' + str(rep)
+                                if new_key not in data_dict[dict_row['worker_code']].keys():  # noqa: E501
+                                    data_dict[dict_row['worker_code']][new_key] = value  # noqa: E501
                 # worker_code is ecnountered for the first time
                 else:
                     data_dict[dict_row['worker_code']] = dict_row
@@ -612,6 +609,8 @@ class Heroku:
         for index, row in tqdm(df.iterrows(), total=df.shape[0]):
             data_count = 0
             counter_filtered = 0
+            print(row.keys())
+            print(row['video_1-dur-0'], row['video_1-dur-1'])
             for i in range(self.num_stimuli):
                 # video ID
                 video_id = 'video_' + str(i)
@@ -632,6 +631,7 @@ class Heroku:
                             # up counter if data with wrong length is found
                             counter_filtered = counter_filtered + 1
             # Only check for participants that watched all videos
+            print(data_count, self.num_stimuli_participant * self.num_repeat)
             if data_count >= self.num_stimuli_participant * self.num_repeat:
                 # check threshold ratio
                 if counter_filtered / data_count > self.threshold_dur:
