@@ -169,7 +169,7 @@ class Analysis:
             y (list): column names of dataframe to plot.
             stacked (bool, optional): show as stacked chart.
             pretty_text (bool, optional): prettify ticks by replacing _ with
-                                           spaces and capitilisng each value.
+                                          spaces and capitilisng each value.
             orientation (str, optional): orientation of bars. v=vertical,
                                          h=horizontal.
             xaxis_title (str, optional): title for x axis.
@@ -439,7 +439,7 @@ class Analysis:
             pretty_text (bool, optional): prettify ticks by replacing _ with
                                           spaces and capitilisng each value.
             marginal (str, optional): type of marginal on x axis. Can be
-                                        'histogram', 'rug', 'box', or 'violin'.
+                                      'histogram', 'rug', 'box', or 'violin'.
             xaxis_title (str, optional): title for x axis.
             yaxis_title (str, optional): title for y axis.
             save_file (bool, optional): flag for saving an html file with plot.
