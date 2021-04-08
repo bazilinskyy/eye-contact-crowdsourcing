@@ -10,11 +10,12 @@ cs.logs(show_level='debug', show_color=True)
 logger = cs.CustomLogger(__name__)  # use custom logger
 
 # Const
-SAVE_P = False  # save pickle files with data
-LOAD_P = True  # load pickle files with data
+SAVE_P = True  # save pickle files with data
+LOAD_P = False  # load pickle files with data
 SAVE_CSV = True  # load csv files with data
 REJECT_CHEATERS = False  # reject cheaters on Appen
-UPDATE_MAPPING = False  # update mapping with keypress data
+UPDATE_MAPPING = True  # update mapping with keypress data
+SHOW_OUTPUT = True  # shoud figures
 file_coords = 'coords.p'  # file to save lists with coordinates
 file_mapping = 'mapping.p'  # file to save lists with coordinates
 
@@ -76,139 +77,143 @@ if __name__ == '__main__':
     else:
         mapping = cs.common.load_from_p(file_mapping,
                                         'mapping of stimuli')
-    # Output
-    analysis = cs.analysis.Analysis()
-    logger.info('Creating figures.')
-    # all keypresses
-    analysis.plot_kp(mapping)
-    # keypresses of an individual stimulus
-    analysis.plot_kp_video(mapping, 'video_0')
-    # keypresses of all videos individually
-    analysis.plot_kp_videos(mapping)
-    # start of eye contact
-    analysis.plot_kp_variable(mapping, 'start_ec')
-    # start of eye contact, certain values
-    analysis.plot_kp_variable(mapping, 'start_ec', [16.6, 12.54])
-    # end of eye contact
-    analysis.plot_kp_variable(mapping, 'end_ec')
-    # separate plots for multiple variables
-    analysis.plot_kp_variables_or(mapping, [{'variable': 'yielding', 'value': 1},  # noqa: E501
-                                                   {'variable': 'start_ec', 'value': 16.6},  # noqa: E501
-                                                   {'variable': 'end_ec', 'value': 27.3}])  # noqa: E501
-    # multiple variables as a single filter
-    analysis.plot_kp_variables_and(mapping, [{'variable': 'yielding', 'value': 1},  # noqa: E501
-                                                    {'variable': 'start_ec', 'value': 12.54}])  # noqa: E501
-    # create correlation matrix
-    analysis.corr_matrix(mapping, save_file=True)
-    # create correlation matrix
-    analysis.corr_matrix(mapping, save_file=True)
-    # stimulus duration
-    analysis.hist(heroku_data,
-              x=heroku_data.columns[heroku_data.columns.to_series().str.contains('-dur')],  # noqa: E501
-              nbins=100,
-              pretty_text=True,
-              save_file=True)
-    # stimulus durations for 2 time periods
-    time_ranges = [  # 1st pilot
-                   {'start': dt.datetime(2021, 3, 16, 00, 00, 00, 000,
-                                         tzinfo=dt.timezone.utc),
-                    'end': dt.datetime(2021, 3, 20, 00, 00, 00, 000,
-                                       tzinfo=dt.timezone.utc)
-                    },
-                   # 2nd pilot
-                   {'start': dt.datetime(2021, 3, 29, 00, 00, 00, 000,
-                                         tzinfo=dt.timezone.utc),
-                    'end': dt.datetime(2021, 4, 4, 00, 00, 00, 000,
-                                       tzinfo=dt.timezone.utc)
-                    }
-                   ]
-    analysis.hist_stim_duration_time(all_data,
-                                     time_ranges=time_ranges,
-                                     nbins=100,
-                                     save_file=True)
-    # browser window dimensions
-    analysis.scatter(heroku_data,
-                     x='window_width',
-                     y='window_height',
-                     color='browser_name',
-                     pretty_text=True,
-                     save_file=True)
-    analysis.heatmap(heroku_data,
-                     x='window_width',
-                     y='window_height',
-                     pretty_text=True,
-                     save_file=True)
-    # time of participation
-    analysis.hist(appen_data,
-                  x=['time'],
-                  color='country',
-                  save_file=True)
-    # eye contact of driver and pedestrian
-    analysis.scatter(appen_data,
-                     x='ec_driver',
-                     y='ec_pedestrian',
-                     color='year_license',
-                     pretty_text=True,
-                     save_file=True)
-    # histogram for driving frequency
-    analysis.hist(appen_data,
-                  x=['driving_freq'],
+    if SHOW_OUTPUT:
+        # Output
+        analysis = cs.analysis.Analysis()
+        logger.info('Creating figures.')
+        # all keypresses
+        analysis.plot_kp(mapping)
+        # keypresses of an individual stimulus
+        analysis.plot_kp_video(mapping, 'video_0')
+        # keypresses of all videos individually
+        analysis.plot_kp_videos(mapping)
+        # start of eye contact
+        analysis.plot_kp_variable(mapping, 'start_ec')
+        # start of eye contact, certain values
+        analysis.plot_kp_variable(mapping, 'start_ec', [16.6, 12.54])
+        # end of eye contact
+        analysis.plot_kp_variable(mapping, 'end_ec')
+        # separate plots for multiple variables
+        analysis.plot_kp_variables_or(mapping, [{'variable': 'yielding', 'value': 1},  # noqa: E501
+                                                       {'variable': 'start_ec', 'value': 16.6},  # noqa: E501
+                                                       {'variable': 'end_ec', 'value': 27.3}])  # noqa: E501
+        # multiple variables as a single filter
+        analysis.plot_kp_variables_and(mapping, [{'variable': 'yielding', 'value': 1},  # noqa: E501
+                                                        {'variable': 'start_ec', 'value': 12.54}])  # noqa: E501
+        # create correlation matrix
+        analysis.corr_matrix(mapping, save_file=True)
+        # create correlation matrix
+        analysis.corr_matrix(mapping, save_file=True)
+        # stimulus duration
+        analysis.hist(heroku_data,
+                  x=heroku_data.columns[heroku_data.columns.to_series().str.contains('-dur')],  # noqa: E501
+                  nbins=100,
                   pretty_text=True,
                   save_file=True)
-    # grouped barchart of DBQ data
-    analysis.hist(appen_data,
-                  x=['dbq1_anger',
-                     'dbq2_speed_motorway',
-                     'dbq3_speed_residential',
-                     'dbq4_headway',
-                     'dbq5_traffic_lights',
-                     'dbq6_horn',
-                     'dbq7_mobile'],
-                  marginal='violin',
-                  pretty_text=True,
-                  save_file=True)
-    # bar chart of post-trial eye contact / intuitiveness
-    analysis.bar(mapping,
-                 x=mapping.index,
-                 y=['eye_contact', 'intuitive'],
-                 show_all_xticks=True,
-                 xaxis_title='Video ID',
-                 yaxis_title='Score',
-                 show_text_labels=True,
-                 save_file=True)
-    # scatter plot of post-trial eye contact / intuitiveness
-    analysis.scatter(mapping,
-                     x='eye_contact',
-                     y='intuitive',
-                     color='dur_ec',
-                     # size='yielding',
-                     # text='no',
-                     hover_data=['no', 'eye_contact', 'intuitive', 'yielding',
-                                 'start_ec', 'end_ec', 'dur_ec'],
-                     # marker_size=30,
-                     pretty_text=True,
-                     xaxis_title='Did the driver make eye contact with you? '
-                                 + '(0-1)',
-                     yaxis_title='The driver\'s eye contact was intuitive '
-                                 + '(1-5)',
-                     # xaxis_range=[0, 1],
-                     # yaxis_range=[1, 5],
-                     # marginal_x='histogram',
-                     # marginal_y='histogram',
+        # stimulus durations for 2 time periods
+        time_ranges = [  # 1st pilot
+                       {'start': dt.datetime(2021, 3, 16, 00, 00, 00, 000,
+                                             tzinfo=dt.timezone.utc),
+                        'end': dt.datetime(2021, 3, 20, 00, 00, 00, 000,
+                                           tzinfo=dt.timezone.utc)
+                        },
+                       # 2nd pilot
+                       {'start': dt.datetime(2021, 3, 29, 00, 00, 00, 000,
+                                             tzinfo=dt.timezone.utc),
+                        'end': dt.datetime(2021, 4, 4, 00, 00, 00, 000,
+                                           tzinfo=dt.timezone.utc)
+                        }
+                       ]
+        analysis.hist_stim_duration_time(all_data,
+                                         time_ranges=time_ranges,
+                                         nbins=100,
+                                         save_file=True)
+        # browser window dimensions
+        analysis.scatter(heroku_data,
+                         x='window_width',
+                         y='window_height',
+                         color='browser_name',
+                         pretty_text=True,
+                         save_file=True)
+        analysis.heatmap(heroku_data,
+                         x='window_width',
+                         y='window_height',
+                         pretty_text=True,
+                         save_file=True)
+        # time of participation
+        df = appen_data
+        df['country'] = df['country'].fillna('NaN')
+        analysis.hist(df,
+                      x=['time'],
+                      color='country',
+                      save_file=True)
+        # eye contact of driver and pedestrian
+        analysis.scatter(appen_data,
+                         x='ec_driver',
+                         y='ec_pedestrian',
+                         color='year_license',
+                         pretty_text=True,
+                         save_file=True)
+        # histogram for driving frequency
+        analysis.hist(appen_data,
+                      x=['driving_freq'],
+                      pretty_text=True,
+                      save_file=True)
+        # grouped barchart of DBQ data
+        analysis.hist(appen_data,
+                      x=['dbq1_anger',
+                         'dbq2_speed_motorway',
+                         'dbq3_speed_residential',
+                         'dbq4_headway',
+                         'dbq5_traffic_lights',
+                         'dbq6_horn',
+                         'dbq7_mobile'],
+                      marginal='violin',
+                      pretty_text=True,
+                      save_file=True)
+        # bar chart of post-trial eye contact / intuitiveness
+        analysis.bar(mapping,
+                     x=mapping.index,
+                     y=['eye_contact', 'intuitive'],
+                     show_all_xticks=True,
+                     xaxis_title='Video ID',
+                     yaxis_title='Score',
+                     show_text_labels=True,
                      save_file=True)
-    # bar chart of post-trial eye contact
-    analysis.bar(mapping,
-                 x=mapping.index,
-                 y=['eye_contact'],
-                 show_all_xticks=True,
-                 xaxis_title='Video ID',
-                 yaxis_title='Score',
-                 show_text_labels=True,
-                 save_file=True)
-    # check if any figures are to be rendered
-    figures = [manager.canvas.figure
-               for manager in
-               matplotlib._pylab_helpers.Gcf.get_all_fig_managers()]
-    # show figures, if any
-    if figures:
-        plt.show()
+        # scatter plot of post-trial eye contact / intuitiveness
+        analysis.scatter(mapping,
+                         x='eye_contact',
+                         y='intuitive',
+                         color='dur_ec',
+                         # size='yielding',
+                         # text='no',
+                         hover_data=['no', 'eye_contact', 'intuitive',
+                                     'yielding', 'start_ec', 'end_ec',
+                                     'dur_ec'],
+                         # marker_size=30,
+                         pretty_text=True,
+                         xaxis_title='Did the driver make eye contact with '
+                                     + 'you? (0-1)',
+                         yaxis_title='The driver\'s eye contact was intuitive '
+                                     + '(1-5)',
+                         # xaxis_range=[0, 1],
+                         # yaxis_range=[1, 5],
+                         # marginal_x='histogram',
+                         # marginal_y='histogram',
+                         save_file=True)
+        # bar chart of post-trial eye contact
+        analysis.bar(mapping,
+                     x=mapping.index,
+                     y=['eye_contact'],
+                     show_all_xticks=True,
+                     xaxis_title='Video ID',
+                     yaxis_title='Score',
+                     show_text_labels=True,
+                     save_file=True)
+        # check if any figures are to be rendered
+        figures = [manager.canvas.figure
+                   for manager in
+                   matplotlib._pylab_helpers.Gcf.get_all_fig_managers()]
+        # show figures, if any
+        if figures:
+            plt.show()
