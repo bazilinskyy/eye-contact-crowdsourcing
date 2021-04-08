@@ -421,7 +421,7 @@ class Heroku:
                                 if (dur < self.mapping['min_dur'][video_id]
                                    or dur > self.mapping['max_dur'][video_id]):
                                     # increase counter of filtered videos
-                                    logger.debug('Filtered reaction time from '
+                                    logger.debug('Filtered keypress data from '
                                                  + 'video {} of detected '
                                                  + 'duration of {} for '
                                                  + 'worker {}.',
@@ -587,7 +587,7 @@ class Heroku:
             2. People who made allowed_mistakes mistakes in injected questions.
 
         Args:
-            df (TYPE): dataframe with data.
+            df (dataframe): dataframe with data.
 
         Returns:
             dataframe: updated dataframe.
@@ -612,7 +612,7 @@ class Heroku:
         for index, row in tqdm(df.iterrows(), total=df.shape[0]):
             data_count = 0
             counter_filtered = 0
-            for i in tqdm(range(self.num_stimuli)):
+            for i in range(self.num_stimuli):
                 # video ID
                 video_id = 'video_' + str(i)
                 for rep in range(self.num_repeat):
@@ -711,7 +711,8 @@ class Heroku:
                                                  row['worker_code'],
                                                  mistakes_counter)
                                     # add to df with data to filter out
-                                    df_2 = df_2.append(row)
+                                    if row['worker_code'] not in df_2.index:
+                                        df_2 = df_2.append(row)
                                     break
         logger.info('Filter-h2. People who made more than {} mistakes with '
                     + 'injected questions: {}',
