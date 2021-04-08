@@ -63,8 +63,7 @@ class Appen:
         self.save_csv = save_csv
 
     def set_data(self, appen_data):
-        """
-        Setter for the data object
+        """Setter for the data object.
         """
         old_shape = self.appen_data.shape  # store old shape for logging
         self.appen_data = appen_data
@@ -72,7 +71,15 @@ class Appen:
                     old_shape,
                     self.appen_data.shape)
 
-    def read_data(self):
+    def read_data(self, filter_data=True):
+        """Read data into an attribute.
+
+        Args:
+            filter_data (bool, optional): flag for filtering data.
+
+        Returns:
+            dataframe: udpated dataframe.
+        """
         # load data
         if self.load_p:
             df = cs.common.load_from_p(self.file_p,
@@ -97,7 +104,8 @@ class Appen:
             # remove underscores in the beginning of column name
             df.columns = df.columns.str.lstrip('_')
             # filter data
-            df = self.filter_data(df)
+            if filter_data:
+                df = self.filter_data(df)
             # mask IDs and IPs
             df = self.mask_ips_ids(df)
             # move worker_code to the front
@@ -117,8 +125,7 @@ class Appen:
         return df
 
     def filter_data(self, df):
-        """
-        Filter data based on the folllowing criteria:
+        """Filter data based on the folllowing criteria:
             1. People who did not read instructions.
             2. People that are under 18 years of age.
             3. People who completed the study in under 5 min.
@@ -173,8 +180,7 @@ class Appen:
         return df
 
     def mask_ips_ids(self, df, mask_ip=True, mask_id=True):
-        """
-        Anonymyse IPs and IDs. IDs are anonymised by subtracting the
+        """Anonymyse IPs and IDs. IDs are anonymised by subtracting the
         given ID from cs.common.get_configs('mask_id').
         """
         # loop through rows of the file
@@ -248,8 +254,7 @@ class Appen:
         return df
 
     def show_info(self):
-        """
-        Output info for data in object.
+        """Output info for data in object.
         """
         # info on age
         logger.info('Age: mean={:,.2f}, std={:,.2f}',

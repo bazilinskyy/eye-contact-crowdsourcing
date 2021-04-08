@@ -28,7 +28,7 @@ if __name__ == '__main__':
                                 load_p=LOAD_P,
                                 save_csv=SAVE_CSV)
     # read heroku data
-    heroku_data = heroku.read_data()
+    heroku_data = heroku.read_data(filter_data=False)
     # create object for working with appen data
     file_appen = cs.common.get_configs('file_appen')
     appen = cs.analysis.Appen(file_data=file_appen,
@@ -36,7 +36,7 @@ if __name__ == '__main__':
                               load_p=LOAD_P,
                               save_csv=SAVE_CSV)
     # read appen data
-    appen_data = appen.read_data()
+    appen_data = appen.read_data(filter_data=False)
     # get keys in data files
     heroku_data_keys = heroku_data.keys()
     appen_data_keys = appen_data.keys()
@@ -69,7 +69,7 @@ if __name__ == '__main__':
         # process post-trial questions and update mapping
         questions = [{'question': 'eye_contact', 'type': 'num'},
                      {'question': 'intuitive', 'type': 'num'}]
-        stimuli_mapping = heroku.process_post_stimulus_questions(questions)
+        stimuli_mapping = heroku.process_stimulus_questions(questions)
         # export to pickle
         cs.common.save_to_p(file_mapping,
                             mapping,
@@ -181,7 +181,11 @@ if __name__ == '__main__':
                      show_text_labels=True,
                      save_file=True)
         # scatter plot of post-trial eye contact / intuitiveness
-        analysis.scatter(mapping,
+        df = mapping
+        # hardcode +1 for output
+        df['intuitive'] = df['intuitive'] + 1
+        df['no'] = df['no'] + 1
+        analysis.scatter(df,
                          x='eye_contact',
                          y='intuitive',
                          color='dur_ec',
@@ -190,14 +194,14 @@ if __name__ == '__main__':
                          hover_data=['no', 'eye_contact', 'intuitive',
                                      'yielding', 'start_ec', 'end_ec',
                                      'dur_ec'],
-                         # marker_size=30,
+                         marker_size=10,
                          pretty_text=True,
                          xaxis_title='Did the driver make eye contact with '
                                      + 'you? (0-1)',
                          yaxis_title='The driver\'s eye contact was intuitive '
                                      + '(1-5)',
-                         # xaxis_range=[0, 1],
-                         # yaxis_range=[1, 5],
+                         xaxis_range=[0.1, 1],
+                         yaxis_range=[2.5, 4],
                          # marginal_x='histogram',
                          # marginal_y='histogram',
                          save_file=True)
