@@ -320,7 +320,6 @@ class Heroku:
                             continue
                         # new value
                         if key + '-0' not in data_dict[dict_row['worker_code']].keys():  # noqa: E501
-                            print('new key', key + '-0')
                             data_dict[dict_row['worker_code']][key + '-0'] = value   # noqa: E501
                         # update old value
                         else:
@@ -609,8 +608,6 @@ class Heroku:
         for index, row in tqdm(df.iterrows(), total=df.shape[0]):
             data_count = 0
             counter_filtered = 0
-            print(row.keys())
-            print(row['video_1-dur-0'], row['video_1-dur-1'])
             for i in range(self.num_stimuli):
                 # video ID
                 video_id = 'video_' + str(i)
@@ -631,7 +628,6 @@ class Heroku:
                             # up counter if data with wrong length is found
                             counter_filtered = counter_filtered + 1
             # Only check for participants that watched all videos
-            print(data_count, self.num_stimuli_participant * self.num_repeat)
             if data_count >= self.num_stimuli_participant * self.num_repeat:
                 # check threshold ratio
                 if counter_filtered / data_count > self.threshold_dur:
