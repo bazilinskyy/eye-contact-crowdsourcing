@@ -273,7 +273,7 @@ class Analysis:
             text (str, optional): dataframe column to assign text labels.
             hover_data (list, optional): dataframe columns to show on hover.
             marker_size (int, optional): size of marker. Should not be used
-                                         togethe with size argument.
+                                         together with size argument.
             pretty_text (bool, optional): prettify ticks by replacing _ with
                                           spaces and capitilisng each value.
             marginal_x (str, optional): type of marginal on x axis. Can be
