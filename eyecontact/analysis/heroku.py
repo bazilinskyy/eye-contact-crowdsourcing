@@ -20,7 +20,8 @@ class Heroku:
     # todo: parse browser interactions
     files_data = []  # list of files with heroku data
     heroku_data = pd.DataFrame()  # pandas dataframe with extracted data
-    mapping = pd.DataFrame()  # pandas dataframe with mapping
+    # pandas dataframe with mapping
+    mapping = pd.read_csv(cs.common.get_configs('mapping_stimuli'))
     res = 0  # resolution for keypress data
     save_p = False  # save data as pickle file
     load_p = False  # load data as pickle file
@@ -56,10 +57,10 @@ class Heroku:
         self.load_p = load_p
         self.save_csv = save_csv
         self.num_stimuli = cs.common.get_configs('num_stimuli')
+        self.num_stimuli_participant = cs.common.get_configs('num_stimuli_participant')  # noqa: E501
         self.num_repeat = cs.common.get_configs('num_repeat')
         self.res = cs.common.get_configs('kp_resolution')
-        self.min_dur = cs.common.get_configs('min_stimulus_duration')
-        self.max_dur = cs.common.get_configs('max_stimulus_duration')
+        self.threshold_dur = cs.common.get_configs('allowed_stimuli_wrong_duration')  # noqa: E501
 
     def set_data(self, heroku_data):
         """
@@ -314,21 +315,21 @@ class Heroku:
                 if dict_row['worker_code'] in data_dict.keys():
                     # iterate over items in the data dictionary
                     for key, value in dict_row.items():
+                        # worker_code does not need to be added
+                        if key == 'worker_code':
+                            continue
                         # new value
                         if key + '-0' not in data_dict[dict_row['worker_code']].keys():  # noqa: E501
+                            print('new key', key + '-0')
                             data_dict[dict_row['worker_code']][key + '-0'] = value   # noqa: E501
                         # update old value
                         else:
-                            # udpate only if the ites from the first repetition
-                            # is a list
-                            if isinstance(data_dict[dict_row['worker_code']][key + '-0'], list):  # noqa: E501
-                                # traverse repetition ids untill get new
-                                # repetition
-                                for rep in range(0, self.num_repeat):
-                                    # build new key with id of repetition
-                                    new_key = key + '-' + str(rep)
-                                    if new_key not in data_dict[dict_row['worker_code']].keys():  # noqa: E501
-                                        data_dict[dict_row['worker_code']][new_key] = value  # noqa: E501
+                            # traverse repetition ids untill get new repetition
+                            for rep in range(0, self.num_repeat):
+                                # build new key with id of repetition
+                                new_key = key + '-' + str(rep)
+                                if new_key not in data_dict[dict_row['worker_code']].keys():  # noqa: E501
+                                    data_dict[dict_row['worker_code']][new_key] = value  # noqa: E501
                 # worker_code is ecnountered for the first time
                 else:
                     data_dict[dict_row['worker_code']] = dict_row
@@ -375,23 +376,26 @@ class Heroku:
         # return mapping as a dataframe
         return df
 
-    def process_kp(self):
+    def process_kp(self, filter_length=True):
         """Process keypresses for resolution self.res.
 
         Returns:
             mapping: updated mapping df.
 
         Args:
-            min_dur (int, optional): minimal allowed duration of video.
-            max_dur (int, optional): miximal allowed duration of video.
+            filter_length (bool, optional): filter out stimuli with unexpected
+                                            length.
         """
-        logger.info('Processing keypress data with res={} ms, min_dur={}, ' +
-                    'max_dur={}.', self.res, self.min_dur, self.max_dur)
+        logger.info('Processing keypress data with res={} ms.', self.res)
         # array to store all binned rt data in
         mapping_rt = []
+        # counter of videos filtered because of length
+        counter_filtered = 0
         # loop through all stimuli
         for i in tqdm(range(self.num_stimuli)):
             video_kp = []
+            # video ID
+            video_id = 'video_' + str(i)
             for rep in range(self.num_repeat):
                 # add suffix with repetition ID
                 video_rt = 'video_' + str(i) + '-rt-' + str(rep)
@@ -406,10 +410,22 @@ class Heroku:
                         # loop through rows in column
                         for row_index, row in enumerate(col_data):
                             # consider only videos of allowed length
-                            if self.min_dur >= 0 and self.max_dur >= 0 \
-                              and video_dur in self.heroku_data.keys():
+                            if (video_dur in self.heroku_data.keys()
+                               and filter_length):
+                                # extract recorded duration
                                 dur = self.heroku_data.iloc[row_index][video_dur]  # noqa: E501
-                                if dur < self.min_dur or dur > self.max_dur:
+                                # check if duration is within limits
+                                if (dur < self.mapping['min_dur'][video_id]
+                                   or dur > self.mapping['max_dur'][video_id]):
+                                    # increase counter of filtered videos
+                                    logger.debug('Filtered keypress data from '
+                                                 + 'video {} of detected '
+                                                 + 'duration of {} for '
+                                                 + 'worker {}.',
+                                                 video_id, dur,
+                                                 self.heroku_data.index[row_index])  # noqa: E501
+                                    # increase counter of filtered videos
+                                    counter_filtered = counter_filtered + 1
                                     continue
                             # check if data is string to filter out nan data
                             if type(row) == list:
@@ -455,6 +471,8 @@ class Heroku:
             kp_mean = [*map(mean, zip(*video_kp))]
             # append data from one video to the mapping array
             mapping_rt.append(kp_mean)
+        logger.info('Filtered out keypress data from {} videos with '
+                    + 'unexpected length.', counter_filtered)
         # update own mapping to include keypress data
         self.mapping['kp'] = mapping_rt
         # save to csv
@@ -523,7 +541,7 @@ class Heroku:
                                     answers[i].append(ans)
             # calculate mean answers from all repetitions for numeric questions
             for i, q in enumerate(questions):
-                if q['type'] == 'num':
+                if q['type'] == 'num' and answers[i]:
                     answers[i] = np.mean([float(i) for i in answers[i]])
             # save video data in array
             mapping_as.append(answers)
@@ -561,21 +579,78 @@ class Heroku:
     def filter_data(self, df):
         """
         Filter data based on the folllowing criteria:
-            1. People who made mistakes in injected questions.
+            1. People who had more than allowed_stimuli share of stimuli of
+               unexpected length.
+            2. People who made allowed_mistakes mistakes in injected questions.
+
+        Args:
+            df (dataframe): dataframe with data.
+
+        Returns:
+            dataframe: updated dataframe.
         """
         # load mapping of codes and coordinates
         logger.info('Filtering heroku data.')
-        # fetch allowed number of mistakes
+        # fetch variables from config file
+        allowed_stimuli = cs.common.get_configs('allowed_stimuli_wrong_duration')  # noqa: E501
         allowed_mistakes = cs.common.get_configs('allowed_mistakes_injections')  # noqa: E501
         # 1. People who made mistakes in injected questions
-        logger.info('Filter-h1. People who made more than {} mistakes in '
+        logger.info('Filter-h1. People who had too many stimuli of unexpected'
+                    + ' length.')
+        # df to store data to filter out
+        df_1 = pd.DataFrame()
+        # array to store in video names
+        video_dur = []
+        for i in range(0, self.num_stimuli):
+            for rep in range(0, self.num_repeat):
+                video_dur.append('video_' + str(i) + '-dur-' + str(rep))
+        # tqdm adds progress bar
+        # loop over participants in data
+        for index, row in tqdm(df.iterrows(), total=df.shape[0]):
+            data_count = 0
+            counter_filtered = 0
+            print(row.keys())
+            print(row['video_1-dur-0'], row['video_1-dur-1'])
+            for i in range(self.num_stimuli):
+                # video ID
+                video_id = 'video_' + str(i)
+                for rep in range(self.num_repeat):
+                    # add suffix with repetition ID
+                    video_dur = 'video_' + str(i) + '-dur-' + str(rep)
+                    # check id value is present
+                    if video_dur not in row.keys():
+                        continue
+                    # check for nan values
+                    if pd.isna(row[video_dur]):
+                        continue
+                    else:
+                        # up data count when data is found
+                        data_count = data_count + 1
+                        if (row[video_dur] < (self.mapping['min_dur'].iloc[i])  # noqa: E501
+                           or row[video_dur] > (self.mapping['max_dur'].iloc[i])):  # noqa: E501
+                            # up counter if data with wrong length is found
+                            counter_filtered = counter_filtered + 1
+            # Only check for participants that watched all videos
+            print(data_count, self.num_stimuli_participant * self.num_repeat)
+            if data_count >= self.num_stimuli_participant * self.num_repeat:
+                # check threshold ratio
+                if counter_filtered / data_count > self.threshold_dur:
+                    # if threshold reached, append data of this participant to
+                    # df_1
+                    df_1 = df_1.append(row)
+        logger.info('Filter-h1. People who had more than {} share of stimuli'
+                    + ' of unexpected length: {}.',
+                    allowed_stimuli,
+                    df_1.shape[0])
+        # 2. People who made mistakes in injected questions
+        logger.info('Filter-h2. People who made more than {} mistakes in '
                     + 'injected questions.', allowed_mistakes)
         # injection questions
         injections = cs.common.get_configs('injections')
         # answers to injected questions
         injections_answers = cs.common.get_configs('injections_answers')
         # df to store data to filter out
-        df_1 = pd.DataFrame()
+        df_2 = pd.DataFrame()
         # loop over rows in data
         # tqdm adds progress bar
         for index, row in tqdm(df.iterrows(), total=df.shape[0]):
@@ -636,20 +711,23 @@ class Heroku:
                                                  row['worker_code'],
                                                  mistakes_counter)
                                     # add to df with data to filter out
-                                    df_1 = df_1.append(row)
+                                    if row['worker_code'] not in df_2.index:
+                                        df_2 = df_2.append(row)
                                     break
-        logger.info('Filter-h1. People who made more than {} mistakes with '
+        logger.info('Filter-h2. People who made more than {} mistakes with '
                     + 'injected questions: {}',
                     allowed_mistakes,
-                    df_1.shape[0])
+                    df_2.shape[0])
         # concatanate dfs with filtered data
         old_size = df.shape[0]
-        # people to filter present
-        if df_1.shape[0] != 0:
-            df_filtered = pd.concat([df_1])
+        df_filtered = pd.concat([df_1, df_2])
+        # check if there are people to filter
+        if not df_filtered.empty:
             # drop rows with filtered data
             unique_worker_codes = df_filtered['worker_code'].drop_duplicates()
             df = df[~df['worker_code'].isin(unique_worker_codes)]
+            # reset index in dataframe
+            df = df.reset_index()
         logger.info('Filtered in total in heroku data: {}',
                     old_size - df.shape[0])
         return df

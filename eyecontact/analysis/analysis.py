@@ -53,7 +53,6 @@ class Analysis:
         # drop not needed columns
         columns_drop = ['no', 'scenario', 'speed', 'video_length']
         df = df.drop(columns_drop, 1)
-        # df.fillna(0, inplace=True)
         # create correlation matrix
         corr = df.corr()
         # create mask
@@ -154,7 +153,7 @@ class Analysis:
         else:
             fig.show()
 
-    def bar(self, df, y: list, x=None, stacked=False, pretty_ticks=False,
+    def bar(self, df, y: list, x=None, stacked=False, pretty_text=False,
             orientation='v', xaxis_title=None, yaxis_title=None,
             show_all_xticks=False, show_all_yticks=False,
             show_text_labels=False, save_file=False):
@@ -168,8 +167,8 @@ class Analysis:
             x (list): values in index of dataframe to plot for.
             y (list): column names of dataframe to plot.
             stacked (bool, optional): show as stacked chart.
-            pretty_ticks (bool, optional): prettify ticks by replacing _ with
-                                           spaces and capitilisng each value.
+            pretty_text (bool, optional): prettify ticks by replacing _ with
+                                          spaces and capitilisng each value.
             orientation (str, optional): orientation of bars. v=vertical,
                                          h=horizontal.
             xaxis_title (str, optional): title for x axis.
@@ -181,8 +180,8 @@ class Analysis:
             save_file (bool, optional): flag for saving an html file with plot.
         """
         logger.info('Creating bar chart for x={} and y={}', x, y)
-        # prettify ticks
-        if pretty_ticks:
+        # prettify text
+        if pretty_text:
             for variable in y:
                 # check if column contains strings
                 if isinstance(df.iloc[0][variable], str):
@@ -255,9 +254,11 @@ class Analysis:
         else:
             fig.show()
 
-    def scatter(self, df, x, y, color=None, size=None, pretty_ticks=False,
+    def scatter(self, df, x, y, color=None, size=None, text=None,
+                hover_data=None, marker_size=None, pretty_text=False,
                 marginal_x='violin', marginal_y='violin', xaxis_title=None,
-                yaxis_title=None, save_file=True):
+                yaxis_title=None, xaxis_range=None, yaxis_range=None,
+                save_file=True):
         """
         Output scatter plot of variables x and y with optinal assignment of
         colour and size.
@@ -267,35 +268,39 @@ class Analysis:
             x (str): dataframe column to plot on x axis.
             y (str): dataframe column to plot on y axis.
             color (str, optional): dataframe column to assign color of circles.
-            size (str, optional):  dataframe column to assign soze of circles.
-            pretty_ticks (bool, optional): prettify ticks by replacing _ with
-                                           spaces and capitilisng each value.
+            size (str, optional): dataframe column to assign soze of circles.
+            text (str, optional): dataframe column to assign text labels.
+            hover_data (list, optional): dataframe columns to show on hover.
+            marker_size (int, optional): size of marker. Should not be used
+                                         together with size argument.
+            pretty_text (bool, optional): prettify ticks by replacing _ with
+                                          spaces and capitilisng each value.
             marginal_x (str, optional): type of marginal on x axis. Can be
                                         'histogram', 'rug', 'box', or 'violin'.
             marginal_y (str, optional): type of marginal on y axis. Can be
                                         'histogram', 'rug', 'box', or 'violin'.
             xaxis_title (str, optional): title for x axis.
             yaxis_title (str, optional): title for y axis.
+            xaxis_range (list, optional): range of x axis in format [min, max].
+            yaxis_range (list, optional): range of y axis in format [min, max].
             save_file (bool, optional): flag for saving an html file with plot.
         """
         # todo: add trendline
         logger.info('Creating scatter plot for x={} and y={}.',
                     x, y)
-        # handle nan values
-        # strings detected
-        if color and isinstance(df.iloc[0][color], str):
-            df[color] = df[color].fillna('NaN')
-        # not strings detected, assuming numeric data
-        elif color and not isinstance(df.iloc[0][color], str):
-            df[color] = df[color].fillna(0)
-        # strings detected
-        if size and isinstance(df.iloc[0][size], str):
-            df[size] = df[size].fillna('NaN')
-        # not strings detected, assuming numeric data
-        elif size and not isinstance(df.iloc[0][size], str):
-            df[size] = df[size].fillna(0)
-        # prettify ticks
-        if pretty_ticks:
+        # using size and marker_size is not supported
+        if marker_size and size:
+            logger.error('Arguments marker_size and size cannot be used'
+                         + ' together.')
+            return -1
+        # using marker_size with histogram marginal(s) is not supported
+        if (marker_size and
+           (marginal_x == 'histogram' or marginal_y == 'histogram')):
+            logger.error('Argument marker_size cannot be used together with'
+                         + ' histogram marginal(s).')
+            return -1
+        # prettify text
+        if pretty_text:
             if isinstance(df.iloc[0][x], str):  # check if string
                 # replace underscores with spaces
                 df[x] = df[x].str.replace('_', ' ')
@@ -316,19 +321,34 @@ class Analysis:
                 df[size] = df[size].str.replace('_', ' ')
                 # capitlise
                 df[size] = df[size].str.capitalize()
+            try:
+                # check if string
+                if text and isinstance(df.iloc[0][text], str):
+                    # replace underscores with spaces
+                    df[text] = df[text].str.replace('_', ' ')
+                    # capitlise
+                    df[text] = df[text].str.capitalize()
+            except ValueError as e:
+                logger.debug('Tried to prettify {} with exception {}', text, e)
         # scatter plot with histograms
         fig = px.scatter(df,
                          x=x,
                          y=y,
-                         marginal_x=marginal_x,
-                         marginal_y=marginal_y,
                          color=color,
-                         size=size)
-
+                         size=size,
+                         text=text,
+                         hover_data=hover_data,
+                         marginal_x=marginal_x,
+                         marginal_y=marginal_y)
         # update layout
         fig.update_layout(template=self.template,
                           xaxis_title=xaxis_title,
-                          yaxis_title=yaxis_title)
+                          yaxis_title=yaxis_title,
+                          xaxis_range=xaxis_range,
+                          yaxis_range=yaxis_range)
+        # change marker size
+        if marker_size:
+            fig.update_traces(marker=dict(size=marker_size))
         # save file
         if save_file:
             self.save_plotly(fig,
@@ -338,7 +358,7 @@ class Analysis:
         else:
             fig.show()
 
-    def heatmap(self, df, x, y, pretty_ticks=False, marginal_x='violin',
+    def heatmap(self, df, x, y, pretty_text=False, marginal_x='violin',
                 marginal_y='violin', xaxis_title=None, yaxis_title=None,
                 save_file=True):
         """
@@ -348,8 +368,8 @@ class Analysis:
             df (dataframe): dataframe with data from heroku.
             x (str): dataframe column to plot on x axis.
             y (str): dataframe column to plot on y axis.
-            pretty_ticks (bool, optional): prettify ticks by replacing _ with
-                                           spaces and capitilisng each value.
+            pretty_text (bool, optional): prettify ticks by replacing _ with
+                                          spaces and capitilisng each value.
             marginal_x (str, optional): type of marginal on x axis. Can be
                                         'histogram', 'rug', 'box', or 'violin'.
             marginal_y (str, optional): type of marginal on y axis. Can be
@@ -360,8 +380,8 @@ class Analysis:
         """
         logger.info('Creating heatmap for x={} and y={}.',
                     x, y)
-        # prettify ticks
-        if pretty_ticks:
+        # prettify text
+        if pretty_text:
             if isinstance(df.iloc[0][x], str):  # check if string
                 # replace underscores with spaces
                 df[x] = df[x].str.replace('_', ' ')
@@ -391,7 +411,7 @@ class Analysis:
         else:
             fig.show()
 
-    def hist(self, df, x, nbins=None, color=None, pretty_ticks=False,
+    def hist(self, df, x, nbins=None, color=None, pretty_text=False,
              marginal='rug', xaxis_title=None, yaxis_title=None,
              save_file=True):
         """
@@ -402,10 +422,10 @@ class Analysis:
             x (list): column names of dataframe to plot.
             nbins (int, optional): number of bins in histogram.
             color (str, optional): dataframe column to assign color of circles.
-            pretty_ticks (bool, optional): prettify ticks by replacing _ with
-                                           spaces and capitilisng each value.
+            pretty_text (bool, optional): prettify ticks by replacing _ with
+                                          spaces and capitilisng each value.
             marginal (str, optional): type of marginal on x axis. Can be
-                                        'histogram', 'rug', 'box', or 'violin'.
+                                      'histogram', 'rug', 'box', or 'violin'.
             xaxis_title (str, optional): title for x axis.
             yaxis_title (str, optional): title for y axis.
             save_file (bool, optional): flag for saving an html file with plot.
@@ -416,21 +436,8 @@ class Analysis:
             logger.error('Color property can be used only with a single' +
                          ' variable to plot.')
             return -1
-        # handle nans
-        # strings detected
-        if isinstance(df.iloc[0][x[0]], str):
-            df[x] = df[x].fillna('NaN')
-        # not strings detected, assuming numeric data
-        elif not isinstance(df.iloc[0][x[0]], str):
-            df[x] = df[x].fillna(0)
-        # strings detected
-        if color and isinstance(df.iloc[0][color], str):
-            df[color] = df[color].fillna('NaN')
-        # not strings detected, assuming numeric data
-        elif color and not isinstance(df.iloc[0][color], str):
-            df[color] = df[color].fillna(0)
-        # prettify ticks
-        if pretty_ticks:
+        # prettify text
+        if pretty_text:
             for variable in x:
                 # check if column contains strings
                 if isinstance(df.iloc[0][variable], str):
