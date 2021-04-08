@@ -10,11 +10,11 @@ cs.logs(show_level='debug', show_color=True)
 logger = cs.CustomLogger(__name__)  # use custom logger
 
 # Const
-SAVE_P = True  # save pickle files with data
-LOAD_P = False  # load pickle files with data
+SAVE_P = False  # save pickle files with data
+LOAD_P = True  # load pickle files with data
 SAVE_CSV = True  # load csv files with data
 REJECT_CHEATERS = False  # reject cheaters on Appen
-UPDATE_MAPPING = True  # update mapping with keypress data
+UPDATE_MAPPING = False  # update mapping with keypress data
 file_coords = 'coords.p'  # file to save lists with coordinates
 file_mapping = 'mapping.p'  # file to save lists with coordinates
 
@@ -62,51 +62,51 @@ if __name__ == '__main__':
     # update mapping with keypress data
     if UPDATE_MAPPING:
         # read in mapping of stimuli
-        stimuli_mapped = heroku.read_mapping()
+        mapping = heroku.read_mapping()
         # process keypresses and update mapping
-        stimuli_mapped = heroku.process_kp()
+        mapping = heroku.process_kp()
         # process post-trial questions and update mapping
         questions = [{'question': 'eye_contact', 'type': 'num'},
                      {'question': 'intuitive', 'type': 'num'}]
         stimuli_mapping = heroku.process_post_stimulus_questions(questions)
         # export to pickle
         cs.common.save_to_p(file_mapping,
-                            stimuli_mapped,
+                            mapping,
                             'mapping with keypress data')
     else:
-        stimuli_mapped = cs.common.load_from_p(file_mapping,
-                                               'mapping of stimuli')
+        mapping = cs.common.load_from_p(file_mapping,
+                                        'mapping of stimuli')
     # Output
     analysis = cs.analysis.Analysis()
     logger.info('Creating figures.')
     # all keypresses
-    analysis.plot_kp(stimuli_mapped)
+    analysis.plot_kp(mapping)
     # keypresses of an individual stimulus
-    analysis.plot_kp_video(stimuli_mapped, 'video_0')
+    analysis.plot_kp_video(mapping, 'video_0')
     # keypresses of all videos individually
-    analysis.plot_kp_videos(stimuli_mapped)
+    analysis.plot_kp_videos(mapping)
     # start of eye contact
-    analysis.plot_kp_variable(stimuli_mapped, 'start_ec')
+    analysis.plot_kp_variable(mapping, 'start_ec')
     # start of eye contact, certain values
-    analysis.plot_kp_variable(stimuli_mapped, 'start_ec', [16.6, 12.54])
+    analysis.plot_kp_variable(mapping, 'start_ec', [16.6, 12.54])
     # end of eye contact
-    analysis.plot_kp_variable(stimuli_mapped, 'end_ec')
+    analysis.plot_kp_variable(mapping, 'end_ec')
     # separate plots for multiple variables
-    analysis.plot_kp_variables_or(stimuli_mapped, [{'variable': 'yielding', 'value': 1},  # noqa: E501
+    analysis.plot_kp_variables_or(mapping, [{'variable': 'yielding', 'value': 1},  # noqa: E501
                                                    {'variable': 'start_ec', 'value': 16.6},  # noqa: E501
                                                    {'variable': 'end_ec', 'value': 27.3}])  # noqa: E501
     # multiple variables as a single filter
-    analysis.plot_kp_variables_and(stimuli_mapped, [{'variable': 'yielding', 'value': 1},  # noqa: E501
+    analysis.plot_kp_variables_and(mapping, [{'variable': 'yielding', 'value': 1},  # noqa: E501
                                                     {'variable': 'start_ec', 'value': 12.54}])  # noqa: E501
     # create correlation matrix
-    analysis.corr_matrix(stimuli_mapped, save_file=True)
+    analysis.corr_matrix(mapping, save_file=True)
     # create correlation matrix
-    analysis.corr_matrix(stimuli_mapped, save_file=True)
+    analysis.corr_matrix(mapping, save_file=True)
     # stimulus duration
     analysis.hist(heroku_data,
               x=heroku_data.columns[heroku_data.columns.to_series().str.contains('-dur')],  # noqa: E501
               nbins=100,
-              pretty_ticks=True,
+              pretty_text=True,
               save_file=True)
     # stimulus durations for 2 time periods
     time_ranges = [  # 1st pilot
@@ -131,12 +131,12 @@ if __name__ == '__main__':
                      x='window_width',
                      y='window_height',
                      color='browser_name',
-                     pretty_ticks=True,
+                     pretty_text=True,
                      save_file=True)
     analysis.heatmap(heroku_data,
                      x='window_width',
                      y='window_height',
-                     pretty_ticks=True,
+                     pretty_text=True,
                      save_file=True)
     # time of participation
     analysis.hist(appen_data,
@@ -148,12 +148,12 @@ if __name__ == '__main__':
                      x='ec_driver',
                      y='ec_pedestrian',
                      color='year_license',
-                     pretty_ticks=True,
+                     pretty_text=True,
                      save_file=True)
     # histogram for driving frequency
     analysis.hist(appen_data,
                   x=['driving_freq'],
-                  pretty_ticks=True,
+                  pretty_text=True,
                   save_file=True)
     # grouped barchart of DBQ data
     analysis.hist(appen_data,
@@ -165,19 +165,40 @@ if __name__ == '__main__':
                      'dbq6_horn',
                      'dbq7_mobile'],
                   marginal='violin',
-                  pretty_ticks=True,
+                  pretty_text=True,
                   save_file=True)
-    # post-trial questions
-    analysis.bar(stimuli_mapped,
-                 x=stimuli_mapped.index,
+    # bar chart of post-trial eye contact / intuitiveness
+    analysis.bar(mapping,
+                 x=mapping.index,
                  y=['eye_contact', 'intuitive'],
                  show_all_xticks=True,
                  xaxis_title='Video ID',
                  yaxis_title='Score',
                  show_text_labels=True,
                  save_file=True)
-    analysis.bar(stimuli_mapped,
-                 x=stimuli_mapped.index,
+    # scatter plot of post-trial eye contact / intuitiveness
+    analysis.scatter(mapping,
+                     x='eye_contact',
+                     y='intuitive',
+                     color='dur_ec',
+                     # size='yielding',
+                     # text='no',
+                     hover_data=['no', 'eye_contact', 'intuitive', 'yielding',
+                                 'start_ec', 'end_ec', 'dur_ec'],
+                     # marker_size=30,
+                     pretty_text=True,
+                     xaxis_title='Did the driver make eye contact with you? '
+                                 + '(0-1)',
+                     yaxis_title='The driver\'s eye contact was intuitive '
+                                 + '(1-5)',
+                     # xaxis_range=[0, 1],
+                     # yaxis_range=[1, 5],
+                     # marginal_x='histogram',
+                     # marginal_y='histogram',
+                     save_file=True)
+    # bar chart of post-trial eye contact
+    analysis.bar(mapping,
+                 x=mapping.index,
                  y=['eye_contact'],
                  show_all_xticks=True,
                  xaxis_title='Video ID',
