@@ -164,9 +164,6 @@ class Heroku:
                                     if stim_name + '-dur' not in dict_row.keys():  # noqa: E501
                                         # first value
                                         dict_row[stim_name + '-dur'] = dur  # noqa: E501
-                                    else:
-                                        # previous values found
-                                        dict_row[stim_name + '-dur'].extend(dur)  # noqa: E501
                     # keypresses
                     if 'rts' in data_cell.keys() and stim_name != '':
                         # record given keypresses
@@ -716,7 +713,14 @@ class Heroku:
                             # increase counter of injections
                             injections_counter = injections_counter + 1
                             # correct answer
-                            index = injections.index(question)
+                            try:
+                                index = injections.index(question)
+                            except ValueError as e:
+                                logger.debug('Detected unexpected injection'
+                                             + 'question {} for {}.',
+                                             question,
+                                             row['worker_code'])
+                                continue
                             correct_answer = injections_answers[index]
                             # given answer (multiple possible)
                             indices = [i for i, x in enumerate(questions) if x == "injection"]  # noqa: E501

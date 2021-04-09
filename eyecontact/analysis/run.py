@@ -234,6 +234,8 @@ if __name__ == '__main__':
                      yaxis_title='Score',
                      show_text_labels=True,
                      save_file=True)
+        # map of participants
+        analysis.heatmap_participants(appen_data, save_file=True)
         # check if any figures are to be rendered
         figures = [manager.canvas.figure
                    for manager in

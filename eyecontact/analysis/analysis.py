@@ -914,39 +914,28 @@ class Analysis:
         else:
             fig.show()
 
-    def danger_values(self, df, save_file=True):
-        """Plotting danger values of post-trial data.
+    def heatmap_participants(self, df, save_file=True):
+        """Heatmap of countries based on counts of participants.
 
         Args:
-            df (dataframe): dataframe containing mappping data
+            df (dataframe): dataframe with keypress data.
+            save_file (bool, optional): flag for saving an html file with plot.
         """
-        # todo: add optional column with values, to filter specific data
-        # create array with names of the data
-        name_array = []
-        for i in range(0, self.num_stimuli):
-            name_array.append('video_' + str(i))
-        # go through all data of a single video
-        vid_data = []
-        for index, row in df.iterrows():
-            # go through array to get data
-            avg_danger = 0
-            for counter, data in enumerate(row['as']):
-                # add all danger values in one
-                avg_danger = avg_danger + int(data[0])
-            # calculate average danger value per vid and append to array
-            # counter starts add 0, so add 1
-            avg_danger = avg_danger / (counter + 1)
-            vid_data.append(avg_danger)
-        fig = go.Figure(data=[go.Bar(name='Danger values',
-                                     x=name_array,
-                                     y=vid_data)])
+        # crate dataframe with counts per country
+        df_country = pd.DataFrame()
+        df_country['counts'] = df['country'].value_counts()
+        df_country['country'] = df_country.index
+        df_country.reset_index(level=0, inplace=False)
+        # create map
+        fig = px.choropleth(df_country, locations='country',
+                            color='counts',
+                            hover_name='country',
+                            color_continuous_scale=px.colors.sequential.Plasma)
         # update layout
-        fig.update_layout(template=self.template,
-                          yaxis_range=[0, 100],
-                          yaxis_title="Level of danger")
+        fig.update_layout(template=self.template)
         # save file
         if save_file:
-            self.save_plotly(fig, 'danger_values', self.folder)
+            self.save_plotly(fig, 'map', self.folder)
         # open it in localhost instead
         else:
             fig.show()
