@@ -115,7 +115,7 @@ if __name__ == '__main__':
                                 columns_drop=columns_drop,
                                 color='dur_ec',
                                 symbol='dur_ec',
-                                diagonal_visible=True,
+                                diagonal_visible=False,
                                 save_file=True)
         # stimulus duration
         analysis.hist(heroku_data,
