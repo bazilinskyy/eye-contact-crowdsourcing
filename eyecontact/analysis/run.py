@@ -125,10 +125,10 @@ if __name__ == '__main__':
                                 save_file=True)
         # stimulus duration
         analysis.hist(heroku_data,
-                  x=heroku_data.columns[heroku_data.columns.to_series().str.contains('-dur')],  # noqa: E501
-                  nbins=100,
-                  pretty_text=True,
-                  save_file=True)
+                      x=heroku_data.columns[heroku_data.columns.to_series().str.contains('-dur')],  # noqa: E501
+                      nbins=100,
+                      pretty_text=True,
+                      save_file=True)
         # stimulus durations for 2 time periods
         time_ranges = [  # 1st pilot
                        {'start': dt.datetime(2021, 3, 16, 00, 00, 00, 000,
