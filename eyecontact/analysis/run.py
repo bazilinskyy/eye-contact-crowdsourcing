@@ -168,6 +168,7 @@ if __name__ == '__main__':
         # time of participation
         df = appen_data
         df['country'] = df['country'].fillna('NaN')
+        df['time'] = df['time'] / 60.0  # convert to min
         analysis.hist(df,
                       x=['time'],
                       color='country',
