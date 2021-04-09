@@ -13,10 +13,10 @@ logger = cs.CustomLogger(__name__)  # use custom logger
 SAVE_P = True  # save pickle files with data
 LOAD_P = False  # load pickle files with data
 SAVE_CSV = True  # load csv files with data
+FILTER_DATA = True  # filter Appen and heroku data
 REJECT_CHEATERS = False  # reject cheaters on Appen
 UPDATE_MAPPING = True  # update mapping with keypress data
 SHOW_OUTPUT = True  # shoud figures
-file_coords = 'coords.p'  # file to save lists with coordinates
 file_mapping = 'mapping.p'  # file to save lists with coordinates
 
 if __name__ == '__main__':
@@ -28,7 +28,7 @@ if __name__ == '__main__':
                                 load_p=LOAD_P,
                                 save_csv=SAVE_CSV)
     # read heroku data
-    heroku_data = heroku.read_data(filter_data=False)
+    heroku_data = heroku.read_data(filter_data=FILTER_DATA)
     # create object for working with appen data
     file_appen = cs.common.get_configs('file_appen')
     appen = cs.analysis.Appen(file_data=file_appen,
@@ -36,7 +36,7 @@ if __name__ == '__main__':
                               load_p=LOAD_P,
                               save_csv=SAVE_CSV)
     # read appen data
-    appen_data = appen.read_data(filter_data=False)
+    appen_data = appen.read_data(filter_data=FILTER_DATA)
     # get keys in data files
     heroku_data_keys = heroku_data.keys()
     appen_data_keys = appen_data.keys()
@@ -69,7 +69,7 @@ if __name__ == '__main__':
         # process post-trial questions and update mapping
         questions = [{'question': 'eye_contact', 'type': 'num'},
                      {'question': 'intuitive', 'type': 'num'}]
-        stimuli_mapping = heroku.process_stimulus_questions(questions)
+        mapping = heroku.process_stimulus_questions(questions)
         # export to pickle
         cs.common.save_to_p(file_mapping,
                             mapping,
@@ -95,15 +95,28 @@ if __name__ == '__main__':
         analysis.plot_kp_variable(mapping, 'end_ec')
         # separate plots for multiple variables
         analysis.plot_kp_variables_or(mapping, [{'variable': 'yielding', 'value': 1},  # noqa: E501
-                                                       {'variable': 'start_ec', 'value': 16.6},  # noqa: E501
-                                                       {'variable': 'end_ec', 'value': 27.3}])  # noqa: E501
+                                                {'variable': 'start_ec', 'value': 16.6},  # noqa: E501
+                                                {'variable': 'end_ec', 'value': 27.3}])  # noqa: E501
         # multiple variables as a single filter
         analysis.plot_kp_variables_and(mapping, [{'variable': 'yielding', 'value': 1},  # noqa: E501
-                                                        {'variable': 'start_ec', 'value': 12.54}])  # noqa: E501
+                                                 {'variable': 'start_ec', 'value': 12.54}])  # noqa: E501
+        # columns to drop in correlation matrix and scatter matrix
+        columns_drop = ['no', 'scenario', 'speed', 'video_length', 'kp',
+                        'min_dur', 'max_dur']
+        # set nan to -1
+        df = mapping
+        df = df.fillna(-1)
         # create correlation matrix
-        analysis.corr_matrix(mapping, save_file=True)
+        analysis.corr_matrix(df,
+                             columns_drop=columns_drop,
+                             save_file=True)
         # create correlation matrix
-        analysis.corr_matrix(mapping, save_file=True)
+        analysis.scatter_matrix(df,
+                                columns_drop=columns_drop,
+                                color='dur_ec',
+                                symbol='dur_ec',
+                                diagonal_visible=True,
+                                save_file=True)
         # stimulus duration
         analysis.hist(heroku_data,
                   x=heroku_data.columns[heroku_data.columns.to_series().str.contains('-dur')],  # noqa: E501
@@ -121,6 +134,12 @@ if __name__ == '__main__':
                        {'start': dt.datetime(2021, 3, 29, 00, 00, 00, 000,
                                              tzinfo=dt.timezone.utc),
                         'end': dt.datetime(2021, 4, 4, 00, 00, 00, 000,
+                                           tzinfo=dt.timezone.utc)
+                        },
+                       # 3rd pilot
+                       {'start': dt.datetime(2021, 4, 8, 00, 00, 00, 000,
+                                             tzinfo=dt.timezone.utc),
+                        'end': dt.datetime(2021, 4, 10, 00, 00, 00, 000,
                                            tzinfo=dt.timezone.utc)
                         }
                        ]
@@ -185,6 +204,7 @@ if __name__ == '__main__':
         # hardcode +1 for output
         df['intuitive'] = df['intuitive'] + 1
         df['no'] = df['no'] + 1
+        print(df[['eye_contact', 'intuitive']])
         analysis.scatter(df,
                          x='eye_contact',
                          y='intuitive',
@@ -200,21 +220,21 @@ if __name__ == '__main__':
                                      + 'you? (0-1)',
                          yaxis_title='The driver\'s eye contact was intuitive '
                                      + '(1-5)',
-                         xaxis_range=[0.1, 1],
-                         yaxis_range=[2.5, 4],
+                         # xaxis_range=[0.1, 1],
+                         # yaxis_range=[2.5, 4],
                          # marginal_x='histogram',
                          # marginal_y='histogram',
                          save_file=True)
-        # bar chart of post-trial eye contact
-        analysis.bar(mapping,
-                     x=mapping.index,
-                     y=['eye_contact'],
-                     show_all_xticks=True,
-                     xaxis_title='Video ID',
-                     yaxis_title='Score',
-                     show_text_labels=True,
-                     save_file=True)
-        # check if any figures are to be rendered
+        # # bar chart of post-trial eye contact
+        # analysis.bar(mapping,
+        #              x=mapping.index,
+        #              y=['eye_contact'],
+        #              show_all_xticks=True,
+        #              xaxis_title='Video ID',
+        #              yaxis_title='Score',
+        #              show_text_labels=True,
+        #              save_file=True)
+        # # check if any figures are to be rendered
         figures = [manager.canvas.figure
                    for manager in
                    matplotlib._pylab_helpers.Gcf.get_all_fig_managers()]

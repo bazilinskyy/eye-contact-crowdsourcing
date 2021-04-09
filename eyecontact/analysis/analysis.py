@@ -41,17 +41,17 @@ class Analysis:
         # number of stimuli
         self.num_stimuli = cs.common.get_configs('num_stimuli')
 
-    def corr_matrix(self, df, save_file=False):
+    def corr_matrix(self, df, columns_drop, save_file=False):
         """
         Output correlation matrix.
 
         Args:
             df (dataframe): mapping dataframe.
+            columns_drop (list): columns dataframes in to ignore.
             save_file (bool, optional): flag for saving an html file with plot.
         """
         logger.info('Creating correlation matrix.')
-        # drop not needed columns
-        columns_drop = ['no', 'scenario', 'speed', 'video_length']
+        # drop columns
         df = df.drop(columns_drop, 1)
         # create correlation matrix
         corr = df.corr()
@@ -89,6 +89,48 @@ class Analysis:
                           pad_inches=0.05)
         # revert font
         self.reset_font()
+
+    def scatter_matrix(self, df, columns_drop, color=None, symbol=None,
+                       diagonal_visible=False, xaxis_title=None,
+                       yaxis_title=None, save_file=False):
+        """
+        Output scatter matrix.
+
+        Args:
+            df (dataframe): mapping dataframe.
+            columns_drop (list): columns dataframes in to ignore.
+            color (str, optional): dataframe column to assign color of points.
+            symbol (str, optional): dataframe column to assign symbol of
+                                    points.
+            diagonal_visible (bool, optional): show/hide diagonal with
+                                               correlation==1.0.
+            xaxis_title (str, optional): title for x axis.
+            yaxis_title (str, optional): title for y axis.
+            save_file (bool, optional): flag for saving an html file with plot.
+        """
+        logger.info('Creating scatter matrix.')
+        # drop columns
+        df = df.drop(columns_drop, 1)
+        # create dimensions list after dropping columns
+        dimensions = df.keys()
+        # plot matrix
+        fig = px.scatter_matrix(df,
+                                dimensions=dimensions,
+                                color=color,
+                                symbol=symbol)
+        # update layout
+        fig.update_layout(template=self.template,
+                          xaxis_title=xaxis_title,
+                          yaxis_title=yaxis_title)
+        # hide diagonal
+        if not diagonal_visible:
+            fig.update_traces(diagonal_visible=False)
+        # save file
+        if save_file:
+            self.save_plotly(fig, 'scatter_matrix', self.folder)
+        # open it in localhost instead
+        else:
+            fig.show()
 
     def communication(self, df, pre_q, post_qs, save_file=False):
         """
@@ -254,7 +296,7 @@ class Analysis:
         else:
             fig.show()
 
-    def scatter(self, df, x, y, color=None, size=None, text=None,
+    def scatter(self, df, x, y, color=None, symbol=None, size=None, text=None,
                 hover_data=None, marker_size=None, pretty_text=False,
                 marginal_x='violin', marginal_y='violin', xaxis_title=None,
                 yaxis_title=None, xaxis_range=None, yaxis_range=None,
@@ -267,8 +309,10 @@ class Analysis:
             df (dataframe): dataframe with data from heroku.
             x (str): dataframe column to plot on x axis.
             y (str): dataframe column to plot on y axis.
-            color (str, optional): dataframe column to assign color of circles.
-            size (str, optional): dataframe column to assign soze of circles.
+            color (str, optional): dataframe column to assign color of points.
+            symbol (str, optional): dataframe column to assign symbol of
+                                    points.
+            size (str, optional): dataframe column to assign soze of points.
             text (str, optional): dataframe column to assign text labels.
             hover_data (list, optional): dataframe columns to show on hover.
             marker_size (int, optional): size of marker. Should not be used
@@ -335,6 +379,7 @@ class Analysis:
                          x=x,
                          y=y,
                          color=color,
+                         symbol=symbol,
                          size=size,
                          text=text,
                          hover_data=hover_data,
