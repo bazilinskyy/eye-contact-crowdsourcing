@@ -192,7 +192,6 @@ if __name__ == '__main__':
                       save_file=True)
         # bar chart of post-trial eye contact / intuitiveness
         analysis.bar(mapping,
-                     x=mapping.index,
                      y=['eye_contact', 'intuitive'],
                      show_all_xticks=True,
                      xaxis_title='Video ID',
@@ -225,16 +224,15 @@ if __name__ == '__main__':
                          # marginal_x='histogram',
                          # marginal_y='histogram',
                          save_file=True)
-        # # bar chart of post-trial eye contact
-        # analysis.bar(mapping,
-        #              x=mapping.index,
-        #              y=['eye_contact'],
-        #              show_all_xticks=True,
-        #              xaxis_title='Video ID',
-        #              yaxis_title='Score',
-        #              show_text_labels=True,
-        #              save_file=True)
-        # # check if any figures are to be rendered
+        # bar chart of post-trial eye contact
+        analysis.bar(mapping,
+                     y=['eye_contact'],
+                     show_all_xticks=True,
+                     xaxis_title='Video ID',
+                     yaxis_title='Score',
+                     show_text_labels=True,
+                     save_file=True)
+        # check if any figures are to be rendered
         figures = [manager.canvas.figure
                    for manager in
                    matplotlib._pylab_helpers.Gcf.get_all_fig_managers()]

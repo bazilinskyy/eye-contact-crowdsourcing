@@ -206,7 +206,8 @@ class Analysis:
 
         Args:
             df (dataframe): dataframe with data from appen.
-            x (list): values in index of dataframe to plot for.
+            x (list): values in index of dataframe to plot for. If no value is
+                      given, the index of df is used.
             y (list): column names of dataframe to plot.
             stacked (bool, optional): show as stacked chart.
             pretty_text (bool, optional): prettify ticks by replacing _ with
@@ -231,6 +232,9 @@ class Analysis:
                     df[variable] = df[variable].str.replace('_', ' ')
                     # capitlise
                     df[variable] = df[variable].str.capitalize()
+        # use index of df if no is given
+        if not x:
+            x = df.index
         # create figure
         fig = go.Figure()
         # go over variables to plot
