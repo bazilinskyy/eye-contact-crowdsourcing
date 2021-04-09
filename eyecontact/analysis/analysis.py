@@ -621,7 +621,7 @@ class Analysis:
             yaxis_title (str, optional): title for y axis.
             save_file (bool, optional): flag for saving an html file with plot.
         """
-        # todo: finish plot with confidence interval
+        # todo: finish plot with confidence interval. based on https://plotly.com/python/continuous-error-bars/
         logger.info('Creating visualisations of keypresses for all data with'
                     + ' confidence interval.')
         # calculate times
