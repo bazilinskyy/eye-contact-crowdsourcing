@@ -85,12 +85,10 @@ if __name__ == '__main__':
         # Output
         analysis = cs.analysis.Analysis()
         logger.info('Creating figures.')
-        # all keypresses
-        analysis.plot_kp(mapping)
-        # all keypresses with coonfidence interval, not finished
-        analysis.plot_kp_conf_int(mapping)
+        # all keypresses with confidence interval
+        analysis.plot_kp(mapping, conf_interval=0.95)
         # keypresses of an individual stimulus
-        analysis.plot_kp_video(mapping, 'video_0')
+        analysis.plot_kp_video(mapping, 'video_0', conf_interval=0.95)
         # keypresses of all videos individually
         analysis.plot_kp_videos(mapping)
         # start of eye contact
@@ -100,12 +98,20 @@ if __name__ == '__main__':
         # end of eye contact
         analysis.plot_kp_variable(mapping, 'end_ec')
         # separate plots for multiple variables
-        analysis.plot_kp_variables_or(mapping, [{'variable': 'yielding', 'value': 1},  # noqa: E501
-                                                {'variable': 'start_ec', 'value': 16.6},  # noqa: E501
-                                                {'variable': 'end_ec', 'value': 27.3}])  # noqa: E501
+        analysis.plot_kp_variables_or(mapping,
+                                      variables=[{'variable': 'yielding',
+                                                  'value': 1},
+                                                 {'variable': 'start_ec',
+                                                  'value': 16.6},
+                                                 {'variable': 'end_ec',
+                                                 'value': 27.3}])
         # multiple variables as a single filter
-        analysis.plot_kp_variables_and(mapping, [{'variable': 'yielding', 'value': 1},  # noqa: E501
-                                                 {'variable': 'start_ec', 'value': 12.54}])  # noqa: E501
+        analysis.plot_kp_variables_and(mapping,
+                                       variables=[{'variable': 'yielding',
+                                                   'value': 1},
+                                                  {'variable': 'start_ec',
+                                                   'value': 12.54}],
+                                       conf_interval=0.95)
         # columns to drop in correlation matrix and scatter matrix
         columns_drop = ['no', 'scenario', 'speed', 'video_length', 'kp',
                         'min_dur', 'max_dur']
@@ -147,8 +153,13 @@ if __name__ == '__main__':
                                              tzinfo=dt.timezone.utc),
                         'end': dt.datetime(2021, 4, 10, 00, 00, 00, 000,
                                            tzinfo=dt.timezone.utc)
-                        }
-                       ]
+                        },
+                       # full
+                       {'start': dt.datetime(2021, 4, 10, 00, 00, 00, 000,
+                                             tzinfo=dt.timezone.utc),
+                        'end': dt.datetime(2021, 10, 1, 00, 00, 00, 000,
+                                           tzinfo=dt.timezone.utc)
+                        }]
         analysis.hist_stim_duration_time(all_data,
                                          time_ranges=time_ranges,
                                          nbins=100,
