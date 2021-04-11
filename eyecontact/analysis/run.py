@@ -14,9 +14,21 @@ SAVE_P = True  # save pickle files with data
 LOAD_P = False  # load pickle files with data
 SAVE_CSV = True  # load csv files with data
 FILTER_DATA = True  # filter Appen and heroku data
+CLEAN_DATA = True  # clean Appen data
 REJECT_CHEATERS = False  # reject cheaters on Appen
 UPDATE_MAPPING = True  # update mapping with keypress data
 SHOW_OUTPUT = True  # shoud figures
+
+# for debugging, skip processing
+# SAVE_P = False  # save pickle files with data
+# LOAD_P = True  # load pickle files with data
+# SAVE_CSV = True  # load csv files with data
+# FILTER_DATA = False  # filter Appen and heroku data
+# CLEAN_DATA = False  # clean Appen data
+# REJECT_CHEATERS = False  # reject cheaters on Appen
+# UPDATE_MAPPING = False  # update mapping with keypress data
+# SHOW_OUTPUT = True  # shoud figures
+
 file_mapping = 'mapping.p'  # file to save lists with coordinates
 
 if __name__ == '__main__':
@@ -38,7 +50,8 @@ if __name__ == '__main__':
                               load_p=LOAD_P,
                               save_csv=SAVE_CSV)
     # read appen data
-    appen_data = appen.read_data(filter_data=FILTER_DATA)
+    appen_data = appen.read_data(filter_data=FILTER_DATA,
+                                 clean_data=CLEAN_DATA)
     # get keys in data files
     heroku_data_keys = heroku_data.keys()
     appen_data_keys = appen_data.keys()
@@ -97,6 +110,8 @@ if __name__ == '__main__':
         analysis.plot_kp_variable(mapping, 'start_ec', [16.6, 12.54])
         # end of eye contact
         analysis.plot_kp_variable(mapping, 'end_ec')
+        # duration of eye contact
+        analysis.plot_kp_variable(mapping, 'dur_ec')
         # separate plots for multiple variables
         analysis.plot_kp_variables_or(mapping,
                                       variables=[{'variable': 'yielding',
@@ -232,14 +247,14 @@ if __name__ == '__main__':
                          hover_data=['no', 'eye_contact', 'intuitive',
                                      'yielding', 'start_ec', 'end_ec',
                                      'dur_ec'],
-                         marker_size=10,
+                         marker_size=20,
                          pretty_text=True,
                          xaxis_title='Did the driver make eye contact with '
                                      + 'you? (0-1)',
                          yaxis_title='The driver\'s eye contact was intuitive '
                                      + '(1-5)',
-                         # xaxis_range=[0.1, 1],
-                         # yaxis_range=[2.5, 4],
+                         xaxis_range=[0, 1],
+                         yaxis_range=[2, 4.5],
                          # marginal_x='histogram',
                          # marginal_y='histogram',
                          save_file=True)
