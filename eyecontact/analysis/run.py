@@ -3,6 +3,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import matplotlib._pylab_helpers
 import datetime as dt
+import numpy as np
 
 import eyecontact as cs
 
@@ -236,13 +237,12 @@ if __name__ == '__main__':
         # hardcode +1 for output
         df['intuitive'] = df['intuitive'] + 1
         df['no'] = df['no'] + 1
-        print(df[['eye_contact', 'intuitive']])
         analysis.scatter(df,
                          x='eye_contact',
                          y='intuitive',
                          color='dur_ec',
                          # size='yielding',
-                         # text='no',
+                         text='no',
                          trendline='ols',
                          hover_data=['no', 'eye_contact', 'intuitive',
                                      'yielding', 'start_ec', 'end_ec',
@@ -255,8 +255,35 @@ if __name__ == '__main__':
                                      + '(1-5)',
                          xaxis_range=[0, 1],
                          yaxis_range=[2, 4.5],
-                         # marginal_x='histogram',
-                         # marginal_y='histogram',
+                         marginal_x=None,
+                         marginal_y=None,
+                         save_file=True)
+        # scatter plot of keypresses / intuitiveness
+        df = mapping
+        # hardcode +1 for output
+        df['intuitive'] = df['intuitive'] + 1
+        df['no'] = df['no'] + 1
+        # calculate mean keypresses
+        df['kp_mean'] = df['kp'].apply(np.mean)
+        analysis.scatter(df,
+                         x='kp_mean',
+                         y='intuitive',
+                         color='dur_ec',
+                         text='no',
+                         trendline='ols',
+                         hover_data=['no', 'eye_contact', 'intuitive',
+                                     'yielding', 'start_ec', 'end_ec',
+                                     'dur_ec'],
+                         marker_size=20,
+                         # pretty_text=True,
+                         xaxis_title='Percentage of trials with response key'
+                                     + ' pressed',
+                         yaxis_title='The driver\'s eye contact was intuitive '
+                                     + '(1-5)',
+                         # xaxis_range=[0, 1],
+                         # yaxis_range=[2, 4.5],
+                         marginal_x=None,
+                         marginal_y=None,
                          save_file=True)
         # bar chart of post-trial eye contact
         analysis.bar(mapping,
