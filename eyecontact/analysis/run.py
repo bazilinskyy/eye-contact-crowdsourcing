@@ -34,8 +34,8 @@ file_mapping = 'mapping.p'  # file to save lists with coordinates
 
 if __name__ == '__main__':
     # check if config file is updated
-    if not cs.common.check_config():
-        sys.exit()
+    # if not cs.common.check_config():
+        # sys.exit()
     # create object for working with heroku data
     files_heroku = cs.common.get_configs('files_heroku')
     heroku = cs.analysis.Heroku(files_data=files_heroku,
@@ -102,7 +102,9 @@ if __name__ == '__main__':
         # all keypresses with confidence interval
         analysis.plot_kp(mapping, conf_interval=0.95)
         # keypresses of an individual stimulus
-        analysis.plot_kp_video(mapping, 'video_0', conf_interval=0.95)
+        # analysis.plot_kp_video(mapping, 'video_0', conf_interval=0.95)
+        # keypress of an individual stimulus with highlighted eye contact
+        analysis.plot_kp_video_marked_ec(mapping, 'video_9', conf_interval=0.95)
         # keypresses of all videos individually
         analysis.plot_kp_videos(mapping)
         # start of eye contact
