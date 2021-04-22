@@ -104,9 +104,10 @@ if __name__ == '__main__':
         # keypresses of an individual stimulus
         analysis.plot_kp_video(mapping, 'video_0', conf_interval=0.95)
         # keypress of an individual stimulus with highlighted eye contact
-        analysis.plot_kp_video_marked_ec(mapping,
-                                         'video_9',
-                                         conf_interval=0.95)
+        analysis.plot_kp_video(mapping,
+                               'video_9',
+                               show_ec=True,
+                               conf_interval=0.95)
         # keypresses of all videos individually
         analysis.plot_kp_videos(mapping)
         # start of eye contact

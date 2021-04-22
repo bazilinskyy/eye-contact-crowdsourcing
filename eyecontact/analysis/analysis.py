@@ -649,7 +649,7 @@ class Analysis:
             fig.show()
 
     def plot_kp_video(self, df, stimulus, extention='mp4', conf_interval=None,
-                      xaxis_title='Time (s)',
+                      show_ec=False, xaxis_title='Time (s)',
                       yaxis_title='Percentage of trials with ' +
                                   'response key pressed',
                       xaxis_range=None, yaxis_range=None, save_file=True):
@@ -661,6 +661,8 @@ class Analysis:
             extention (str, optional): extension of stimulus.
             conf_interval (float, optional): show confidence interval defined
                                              by argument.
+            show_ec (bool, optional): show dotted lines for start and end of
+                                      eye contact.
             xaxis_title (str, optional): title for x axis.
             yaxis_title (str, optional): title for y axis.
             xaxis_range (list, optional): range of x axis in format [min, max].
@@ -677,6 +679,15 @@ class Analysis:
         fig = px.line(y=df.loc[stimulus]['kp'],
                       x=times,
                       title='Keypresses for stimulus ' + stimulus)
+        # mark start and end of eye contact
+        if (not np.isnan(df['start_ec'][stimulus])
+           and not np.isnan(df['end_ec'][stimulus])):
+            fig.add_vline(x=df['start_ec'][stimulus] + 1,
+                          line_dash='dash',
+                          line_color='green')
+            fig.add_vline(x=df['end_ec'][stimulus] + 1,
+                          line_dash='dash',
+                          line_color='red')
         # show confidence interval
         if conf_interval:
             # calculate condidence interval
@@ -711,82 +722,6 @@ class Analysis:
         # save file
         if save_file:
             self.save_plotly(fig, 'kp_' + stimulus, self.folder)
-        # open it in localhost instead
-        else:
-            fig.show()
-
-    def plot_kp_video_marked_ec(self, df, stimulus, extention='mp4',
-                                conf_interval=None, xaxis_title='Time (s)',
-                                yaxis_title='Percentage of trials with ' +
-                                'response key pressed',
-                                xaxis_range=None, yaxis_range=None,
-                                save_file=True):
-        """Plot keypresses with multiple variables as a filter. Also plot
-        vertical lines to mark eye contact start and end.
-
-        Args:
-            df (dataframe): dataframe with keypress data.
-            stimulus (str): name of stimulus.
-            extention (str, optional): extension of stimulus.
-            conf_interval (float, optional): show confidence interval defined
-                                             by argument.
-            xaxis_title (str, optional): title for x axis.
-            yaxis_title (str, optional): title for y axis.
-            xaxis_range (list, optional): range of x axis in format [min, max].
-            yaxis_range (list, optional): range of y axis in format [min, max].
-            save_file (bool, optional): flag for saving an html file with plot.
-        """
-        # extract video length
-        video_len = df.loc[stimulus]['video_length']
-        # calculate times
-        times = np.array(range(self.res, video_len + self.res, self.res)) / 1000  # noqa: E501
-        # keypress data
-        kp_data = df.loc[stimulus]['kp']
-        # plot keypresses
-        fig = px.line(y=df.loc[stimulus]['kp'],
-                      x=times,
-                      title='Keypresses for stimulus ' + stimulus)
-        mapping = cs.analysis.Heroku.read_mapping(self)
-        if (not np.isnan(mapping['start_ec'][stimulus])
-           and not np.isnan(mapping['end_ec'][stimulus])):
-            fig.add_vline(x=mapping['start_ec'][stimulus] + 1,
-                          line_dash='dash', line_color='white')
-            fig.add_vline(x=mapping['end_ec'][stimulus] + 1,
-                          line_dash='dash', line_color='white')
-        # show confidence interval
-        if conf_interval:
-            # calculate condidence interval
-            (y_lower, y_upper) = self.get_conf_interval_bounds(kp_data,
-                                                               conf_interval)
-            # plot interval
-            fig.add_trace(go.Scatter(name='Upper Bound',
-                                     x=times,
-                                     y=y_upper,
-                                     mode='lines',
-                                     fillcolor='rgba(0,100,80,0.2)',
-                                     line=dict(color='rgba(255,255,255,0)'),
-                                     hoverinfo="skip",
-                                     showlegend=False))
-            fig.add_trace(go.Scatter(name='Lower Bound',
-                                     x=times,
-                                     y=y_lower,
-                                     fill='tonexty',
-                                     fillcolor='rgba(0,100,80,0.2)',
-                                     line=dict(color='rgba(255,255,255,0)'),
-                                     hoverinfo="skip",
-                                     showlegend=False))
-        # define range of y axis
-        if not yaxis_range:
-            yaxis_range = [0, max(y_upper) if conf_interval else max(kp_data)]
-        # update layout
-        fig.update_layout(template=self.template,
-                          xaxis_title=xaxis_title,
-                          yaxis_title=yaxis_title,
-                          xaxis_range=xaxis_range,
-                          yaxis_range=yaxis_range)
-        # save file
-        if save_file:
-            self.save_plotly(fig, 'kp_marked_ec_' + stimulus, self.folder)
         # open it in localhost instead
         else:
             fig.show()
