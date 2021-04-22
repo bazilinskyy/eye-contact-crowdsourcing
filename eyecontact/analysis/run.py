@@ -11,31 +11,31 @@ cs.logs(show_level='info', show_color=True)
 logger = cs.CustomLogger(__name__)  # use custom logger
 
 # Const
-SAVE_P = True  # save pickle files with data
-LOAD_P = False  # load pickle files with data
-SAVE_CSV = True  # load csv files with data
-FILTER_DATA = True  # filter Appen and heroku data
-CLEAN_DATA = True  # clean Appen data
-REJECT_CHEATERS = False  # reject cheaters on Appen
-UPDATE_MAPPING = True  # update mapping with keypress data
-SHOW_OUTPUT = True  # shoud figures
+# SAVE_P = True  # save pickle files with data
+# LOAD_P = False  # load pickle files with data
+# SAVE_CSV = True  # load csv files with data
+# FILTER_DATA = True  # filter Appen and heroku data
+# CLEAN_DATA = True  # clean Appen data
+# REJECT_CHEATERS = False  # reject cheaters on Appen
+# UPDATE_MAPPING = True  # update mapping with keypress data
+# SHOW_OUTPUT = True  # shoud figures
 
 # for debugging, skip processing
-# SAVE_P = False  # save pickle files with data
-# LOAD_P = True  # load pickle files with data
-# SAVE_CSV = True  # load csv files with data
-# FILTER_DATA = False  # filter Appen and heroku data
-# CLEAN_DATA = False  # clean Appen data
-# REJECT_CHEATERS = False  # reject cheaters on Appen
-# UPDATE_MAPPING = False  # update mapping with keypress data
-# SHOW_OUTPUT = True  # shoud figures
+SAVE_P = False  # save pickle files with data
+LOAD_P = True  # load pickle files with data
+SAVE_CSV = True  # load csv files with data
+FILTER_DATA = False  # filter Appen and heroku data
+CLEAN_DATA = False  # clean Appen data
+REJECT_CHEATERS = False  # reject cheaters on Appen
+UPDATE_MAPPING = False  # update mapping with keypress data
+SHOW_OUTPUT = True  # shoud figures
 
 file_mapping = 'mapping.p'  # file to save lists with coordinates
 
 if __name__ == '__main__':
     # check if config file is updated
-    # if not cs.common.check_config():
-        # sys.exit()
+    if not cs.common.check_config():
+        sys.exit()
     # create object for working with heroku data
     files_heroku = cs.common.get_configs('files_heroku')
     heroku = cs.analysis.Heroku(files_data=files_heroku,

@@ -260,7 +260,7 @@ class Analysis:
                                  method='update',
                                  args=[{'visible': [True] * df[y].shape[0]},
                                        {'title': 'All',
-                                       'showlegend': True}])])
+                                        'showlegend': True}])])
             # counter for traversing through stimuli
             counter_rows = 0
             for variable in y:
@@ -344,7 +344,7 @@ class Analysis:
             return -1
         # using marker_size with histogram marginal(s) is not supported
         if (marker_size and
-           (marginal_x == 'histogram' or marginal_y == 'histogram')):
+                (marginal_x == 'histogram' or marginal_y == 'histogram')):
             logger.error('Argument marker_size cannot be used together with'
                          + ' histogram marginal(s).')
             return -1
@@ -715,12 +715,14 @@ class Analysis:
         else:
             fig.show()
 
-    def plot_kp_video_marked_ec(self, df, stimulus, extention='mp4', conf_interval=None,
-                      xaxis_title='Time (s)',
-                      yaxis_title='Percentage of trials with ' +
-                                  'response key pressed',
-                      xaxis_range=None, yaxis_range=None, save_file=True):
-        """Plot keypresses with multiple variables as a filter. Also plot vertical lines to mark eye contact start and end.
+    def plot_kp_video_marked_ec(self, df, stimulus, extention='mp4',
+                                conf_interval=None, xaxis_title='Time (s)',
+                                yaxis_title='Percentage of trials with ' +
+                                'response key pressed',
+                                xaxis_range=None, yaxis_range=None,
+                                save_file=True):
+        """Plot keypresses with multiple variables as a filter. Also plot
+        vertical lines to mark eye contact start and end.
 
         Args:
             df (dataframe): dataframe with keypress data.
@@ -745,9 +747,12 @@ class Analysis:
                       x=times,
                       title='Keypresses for stimulus ' + stimulus)
         mapping = cs.analysis.Heroku.read_mapping(self)
-        if ~np.isnan(mapping['start_ec'][stimulus]) and ~np.isnan(mapping['end_ec'][stimulus]):
-            fig.add_vline(x=mapping['start_ec'][stimulus]+1, line_dash='dash', line_color='white')
-            fig.add_vline(x=mapping['end_ec'][stimulus]+1, line_dash='dash', line_color='white')
+        if (not np.isnan(mapping['start_ec'][stimulus])
+           and not np.isnan(mapping['end_ec'][stimulus])):
+            fig.add_vline(x=mapping['start_ec'][stimulus] + 1,
+                          line_dash='dash', line_color='white')
+            fig.add_vline(x=mapping['end_ec'][stimulus] + 1,
+                          line_dash='dash', line_color='white')
         # show confidence interval
         if conf_interval:
             # calculate condidence interval
@@ -1164,7 +1169,7 @@ class Analysis:
             os.makedirs(path)
         # limit name to 255 char
         if len(path) + len(name) > 250:
-            name = name[:255-len(path)-5]
+            name = name[:255 - len(path) - 5]
         file_plot = os.path.join(path + name + '.html')
         # save to file
         py.offline.plot(fig, filename=file_plot)
