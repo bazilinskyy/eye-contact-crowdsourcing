@@ -786,7 +786,7 @@ class Analysis:
                           yaxis_range=yaxis_range)
         # save file
         if save_file:
-            self.save_plotly(fig, 'kp_' + stimulus, self.folder)
+            self.save_plotly(fig, 'kp_marked_ec_' + stimulus, self.folder)
         # open it in localhost instead
         else:
             fig.show()

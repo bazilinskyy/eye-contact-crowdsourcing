@@ -11,24 +11,24 @@ cs.logs(show_level='info', show_color=True)
 logger = cs.CustomLogger(__name__)  # use custom logger
 
 # Const
-# SAVE_P = True  # save pickle files with data
-# LOAD_P = False  # load pickle files with data
-# SAVE_CSV = True  # load csv files with data
-# FILTER_DATA = True  # filter Appen and heroku data
-# CLEAN_DATA = True  # clean Appen data
-# REJECT_CHEATERS = False  # reject cheaters on Appen
-# UPDATE_MAPPING = True  # update mapping with keypress data
-# SHOW_OUTPUT = True  # shoud figures
+SAVE_P = True  # save pickle files with data
+LOAD_P = False  # load pickle files with data
+SAVE_CSV = True  # load csv files with data
+FILTER_DATA = True  # filter Appen and heroku data
+CLEAN_DATA = True  # clean Appen data
+REJECT_CHEATERS = False  # reject cheaters on Appen
+UPDATE_MAPPING = True  # update mapping with keypress data
+SHOW_OUTPUT = True  # shoud figures
 
 # for debugging, skip processing
-SAVE_P = False  # save pickle files with data
-LOAD_P = True  # load pickle files with data
-SAVE_CSV = True  # load csv files with data
-FILTER_DATA = False  # filter Appen and heroku data
-CLEAN_DATA = False  # clean Appen data
-REJECT_CHEATERS = False  # reject cheaters on Appen
-UPDATE_MAPPING = False  # update mapping with keypress data
-SHOW_OUTPUT = True  # shoud figures
+# SAVE_P = False  # save pickle files with data
+# LOAD_P = True  # load pickle files with data
+# SAVE_CSV = True  # load csv files with data
+# FILTER_DATA = False  # filter Appen and heroku data
+# CLEAN_DATA = False  # clean Appen data
+# REJECT_CHEATERS = False  # reject cheaters on Appen
+# UPDATE_MAPPING = False  # update mapping with keypress data
+# SHOW_OUTPUT = True  # shoud figures
 
 file_mapping = 'mapping.p'  # file to save lists with coordinates
 
@@ -102,9 +102,11 @@ if __name__ == '__main__':
         # all keypresses with confidence interval
         analysis.plot_kp(mapping, conf_interval=0.95)
         # keypresses of an individual stimulus
-        # analysis.plot_kp_video(mapping, 'video_0', conf_interval=0.95)
+        analysis.plot_kp_video(mapping, 'video_0', conf_interval=0.95)
         # keypress of an individual stimulus with highlighted eye contact
-        analysis.plot_kp_video_marked_ec(mapping, 'video_9', conf_interval=0.95)
+        analysis.plot_kp_video_marked_ec(mapping,
+                                         'video_9',
+                                         conf_interval=0.95)
         # keypresses of all videos individually
         analysis.plot_kp_videos(mapping)
         # start of eye contact
