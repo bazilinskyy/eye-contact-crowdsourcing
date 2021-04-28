@@ -18,7 +18,6 @@ logger = cs.CustomLogger(__name__)  # use custom logger
 
 
 class Heroku:
-    # todo: parse browser interactions
     files_data = []  # list of files with heroku data
     heroku_data = pd.DataFrame()  # pandas dataframe with extracted data
     # pandas dataframe with mapping
