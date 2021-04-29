@@ -5,7 +5,7 @@ import os
 import datetime as dt
 from typing import Union, Optional
 
-import eyecontact as cshf
+import eyecontact as cs
 
 
 def logs(
