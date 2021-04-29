@@ -561,9 +561,9 @@ class Analysis:
         if save_file:
             self.save_plotly(fig,
                              'hist_stim_duration' +
-                             '-'.join(t['start'].strftime('%m.%d.%Y,%H:%M:%S') +  # noqa: E501
+                             '-'.join(t['start'].strftime('%m-%d-%Y-%H-%M-%S') +  # noqa: E501
                                       '-' +
-                                      t['end'].strftime('%m.%d.%Y,%H:%M:%S')
+                                      t['end'].strftime('%m-%d-%Y-%H-%M-%S')
                                       for t in time_ranges),
                              self.folder)
         # open it in localhost instead
@@ -1157,29 +1157,6 @@ class Analysis:
                     pad_inches=pad_inches)
         # clear figure from memory
         plt.close(fig)
-
-    def save_anim(self, image, anim, output_subdir, suffix):
-        """
-        Helper function to save figure as file.
-
-        Args:
-            image (str): name of figure to save.
-            anim (matplotlib animation): animation object.
-            output_subdir (str): folder for saving file.
-            suffix (str): suffix to add in the end of the filename.
-        """
-        # extract name of stimulus after last slash
-        file_no_path = image.rsplit('/', 1)[-1]
-        # remove extension
-        file_no_path = os.path.splitext(file_no_path)[0]
-        # create path
-        path = cs.settings.output_dir + output_subdir
-        if not os.path.exists(path):
-            os.makedirs(path)
-        # save file
-        anim.save(path + file_no_path + suffix, writer='ffmpeg')
-        # clear animation from memory
-        plt.close(self.fig)
 
     def autolabel(self, ax, on_top=False, decimal=True):
         """
