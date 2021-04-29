@@ -1,9 +1,9 @@
 """Contain function to display or store logging messages."""
+import datetime as dt
 import logging
 import sys
 import os
-import datetime as dt
-from typing import Union, Optional
+from typing import Optional, Union
 
 import eyecontact as cs
 
