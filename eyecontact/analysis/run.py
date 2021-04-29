@@ -1,5 +1,4 @@
 # by Pavlo Bazilinskyy <pavlo.bazilinskyy@gmail.com>
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 import matplotlib._pylab_helpers
 import datetime as dt
@@ -100,7 +99,8 @@ if __name__ == '__main__':
         analysis.plot_kp(mapping, conf_interval=0.95)
         # keypresses of an individual stimulus
         analysis.plot_kp_video(mapping, 'video_0', conf_interval=0.95)
-        # keypress of an individual stimulus with marked start and end of eyecontact, deceleration, full stop, takeoff
+        # keypress of an individual stimulus with marked start and end of
+        # eyecontact, deceleration, full stop, takeoff
         analysis.plot_kp_video(mapping,
                                'video_9',
                                show_lines=True,
