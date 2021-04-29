@@ -662,7 +662,8 @@ class Analysis:
             conf_interval (float, optional): show confidence interval defined
                                              by argument.
             show_lines (bool, optional): show dotted lines for start and end of
-                                      eye contact, deceleration, full stop, takeoff
+                                      eye contact, deceleration, full stop,
+                                      takeoff
             xaxis_title (str, optional): title for x axis.
             yaxis_title (str, optional): title for y axis.
             xaxis_range (list, optional): range of x axis in format [min, max].
@@ -682,7 +683,7 @@ class Analysis:
         if show_lines:
             # mark start and end of eye contact
             if (not np.isnan(df['start_ec'][stimulus])
-               and not np.isnan(df['end_ec'][stimulus])):
+                    and not np.isnan(df['end_ec'][stimulus])):
                 fig.add_vline(x=df['start_ec'][stimulus] + 1 + 0.075,
                               line_dash='dash',
                               line_color='white')
@@ -691,20 +692,20 @@ class Analysis:
                               line_color='white')
             # mark start and end of braking
             if (not np.isnan(df['start_deceleration_time'][stimulus])
-               and not np.isnan(df['end_deceleration_time'][stimulus])):
-                fig.add_vline(x=df['start_deceleration_time'][stimulus] + 1 - 0.15,
+                    and not np.isnan(df['end_deceleration_time'][stimulus])):
+                fig.add_vline(x=df['start_deceleration_time'][stimulus] + 0.75,
                               line_dash='dash',
                               line_color='yellow')
-                fig.add_vline(x=df['end_deceleration_time'][stimulus] + 1 - 0.15,
+                fig.add_vline(x=df['end_deceleration_time'][stimulus] + 0.75,
                               line_dash='dash',
                               line_color='yellow')
             # mark start and end of full stop
             if (not np.isnan(df['start_fullstop'][stimulus])
-               and not np.isnan(df['end_fullstop'][stimulus])):
-                fig.add_vline(x=df['start_fullstop'][stimulus] + 1 - 0.075,
+                    and not np.isnan(df['end_fullstop'][stimulus])):
+                fig.add_vline(x=df['start_fullstop'][stimulus] + 0.925,
                               line_dash='dash',
                               line_color='red')
-                fig.add_vline(x=df['end_fullstop'][stimulus] + 1 - 0.075,
+                fig.add_vline(x=df['end_fullstop'][stimulus] + 0.925,
                               line_dash='dash',
                               line_color='red')
             # mark start of takeoff
