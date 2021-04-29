@@ -649,7 +649,7 @@ class Analysis:
             fig.show()
 
     def plot_kp_video(self, df, stimulus, extention='mp4', conf_interval=None,
-                      show_ec=False, xaxis_title='Time (s)',
+                      show_lines=False, xaxis_title='Time (s)',
                       yaxis_title='Percentage of trials with ' +
                                   'response key pressed',
                       xaxis_range=None, yaxis_range=None, save_file=True):
@@ -661,8 +661,8 @@ class Analysis:
             extention (str, optional): extension of stimulus.
             conf_interval (float, optional): show confidence interval defined
                                              by argument.
-            show_ec (bool, optional): show dotted lines for start and end of
-                                      eye contact.
+            show_lines (bool, optional): show dotted lines for start and end of
+                                      eye contact, deceleration, full stop, takeoff
             xaxis_title (str, optional): title for x axis.
             yaxis_title (str, optional): title for y axis.
             xaxis_range (list, optional): range of x axis in format [min, max].
@@ -679,15 +679,39 @@ class Analysis:
         fig = px.line(y=df.loc[stimulus]['kp'],
                       x=times,
                       title='Keypresses for stimulus ' + stimulus)
-        # mark start and end of eye contact
-        if (not np.isnan(df['start_ec'][stimulus])
-           and not np.isnan(df['end_ec'][stimulus])):
-            fig.add_vline(x=df['start_ec'][stimulus] + 1,
-                          line_dash='dash',
-                          line_color='green')
-            fig.add_vline(x=df['end_ec'][stimulus] + 1,
-                          line_dash='dash',
-                          line_color='red')
+        if show_lines:
+            # mark start and end of eye contact
+            if (not np.isnan(df['start_ec'][stimulus])
+               and not np.isnan(df['end_ec'][stimulus])):
+                fig.add_vline(x=df['start_ec'][stimulus] + 1 + 0.075,
+                              line_dash='dash',
+                              line_color='white')
+                fig.add_vline(x=df['end_ec'][stimulus] + 1 + 0.075,
+                              line_dash='dash',
+                              line_color='white')
+            # mark start and end of braking
+            if (not np.isnan(df['start_deceleration_time'][stimulus])
+               and not np.isnan(df['end_deceleration_time'][stimulus])):
+                fig.add_vline(x=df['start_deceleration_time'][stimulus] + 1 - 0.15,
+                              line_dash='dash',
+                              line_color='yellow')
+                fig.add_vline(x=df['end_deceleration_time'][stimulus] + 1 - 0.15,
+                              line_dash='dash',
+                              line_color='yellow')
+            # mark start and end of full stop
+            if (not np.isnan(df['start_fullstop'][stimulus])
+               and not np.isnan(df['end_fullstop'][stimulus])):
+                fig.add_vline(x=df['start_fullstop'][stimulus] + 1 - 0.075,
+                              line_dash='dash',
+                              line_color='red')
+                fig.add_vline(x=df['end_fullstop'][stimulus] + 1 - 0.075,
+                              line_dash='dash',
+                              line_color='red')
+            # mark start of takeoff
+            if not np.isnan(df['takeoff'][stimulus]):
+                fig.add_vline(x=df['takeoff'][stimulus] + 1,
+                              line_dash='dash',
+                              line_color='green')
         # show confidence interval
         if conf_interval:
             # calculate condidence interval
