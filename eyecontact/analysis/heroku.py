@@ -641,8 +641,6 @@ class Heroku:
             data_count = 0
             counter_filtered = 0
             for i in range(self.num_stimuli):
-                # video ID
-                video_id = 'video_' + str(i)
                 for rep in range(self.num_repeat):
                     # add suffix with repetition ID
                     video_dur = 'video_' + str(i) + '-dur-' + str(rep)
@@ -691,10 +689,8 @@ class Heroku:
             # counter sentinel images found in training
             injections_counter = 0
             # questions detected
-            questions_detected = False
             questions = []
             # answers detected
-            answers_detected = False
             answers = []
             # loop over values in the row
             for index_r, value_r in row.iteritems():
@@ -704,11 +700,9 @@ class Heroku:
                     continue
                 # questions detected
                 if '-qs' in index_r:
-                    questions_detected = True
                     questions = value_r
                 # answers detected
                 if '-as' in index_r:
-                    answers_detected = True
                     answers = value_r
                 # injected question
                 if '-qi' in index_r:
@@ -723,7 +717,7 @@ class Heroku:
                             # correct answer
                             try:
                                 index = injections.index(question)
-                            except ValueError as e:
+                            except ValueError:
                                 logger.debug('Detected unexpected injection'
                                              + 'question {} for {}.',
                                              question,
