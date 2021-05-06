@@ -17,15 +17,22 @@ pd.options.mode.chained_assignment = None  # default='warn'
 logger = cs.CustomLogger(__name__)  # use custom logger
 
 
+# todo: parse browser interactions
 class Heroku:
-    files_data: list = []  # list of files with heroku data
-    heroku_data = pd.DataFrame()  # pandas dataframe with extracted data
+    # pandas dataframe with extracted data
+    heroku_data = pd.DataFrame()
     # pandas dataframe with mapping
     mapping = pd.read_csv(cs.common.get_configs('mapping_stimuli'))
-    res = 0  # resolution for keypress data
-    save_p = False  # save data as pickle file
-    load_p = False  # load data as pickle file
-    save_csv = False  # save data as csv file
+    # resolution for keypress data
+    res = cs.common.get_configs('kp_resolution')
+    # number of stimuli
+    num_stimuli = cs.common.get_configs('num_stimuli')
+    # number of stimuli shown for each participant
+    num_stimuli_participant = cs.common.get_configs('num_stimuli_participant')
+    # number of repeats for each stimulus
+    num_repeat = cs.common.get_configs('num_repeat')
+    # allowed number of stimuli with detected wrong duration
+    allowed_length = cs.common.get_configs('allowed_stimuli_wrong_duration')
     # pickle file for saving data
     file_p = 'heroku_data.p'
     # csv file for saving data
@@ -52,15 +59,14 @@ class Heroku:
                  save_p: bool,
                  load_p: bool,
                  save_csv: bool):
+        # list of files with raw data
         self.files_data = files_data
+        # save data as pickle file
         self.save_p = save_p
+        # load data as pickle file
         self.load_p = load_p
+        # save data as csv file
         self.save_csv = save_csv
-        self.num_stimuli = cs.common.get_configs('num_stimuli')
-        self.num_stimuli_participant = cs.common.get_configs('num_stimuli_participant')  # noqa: E501
-        self.num_repeat = cs.common.get_configs('num_repeat')
-        self.res = cs.common.get_configs('kp_resolution')
-        self.threshold_dur = cs.common.get_configs('allowed_stimuli_wrong_duration')  # noqa: E501
 
     def set_data(self, heroku_data):
         """
@@ -660,7 +666,7 @@ class Heroku:
             # Only check for participants that watched all videos
             if data_count >= self.num_stimuli_participant * self.num_repeat:
                 # check threshold ratio
-                if counter_filtered / data_count > self.threshold_dur:
+                if counter_filtered / data_count > self.allowed_length:
                     # if threshold reached, append data of this participant to
                     # df_1
                     df_1 = df_1.append(row)
