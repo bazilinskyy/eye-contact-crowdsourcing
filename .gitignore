@@ -20,3 +20,4 @@ secret
 
 # Pickle files
 eyecontact/analysis/*.p
+eyecontact/*.p
