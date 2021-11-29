@@ -1,5 +1,4 @@
-Exploration of eye contact in traffic by means of crowdsourcing
-=======
+# Exploration of eye contact in traffic by means of crowdsourcing
 
 ## Setup
 Tested with Python 3.8.5. To setup the environment run these two commands in a parent folder of the downloaded repository (replace `/` with `\` and possibly add `--user` if on Windows):
