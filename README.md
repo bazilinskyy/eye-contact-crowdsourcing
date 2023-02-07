@@ -8,4 +8,4 @@ Tested with Python 3.8.5. To setup the environment run these two commands in a p
 ### Citation
 If you use results of the project for academic work please cite the following paper.
 
-> Onkhar, V., Bazilinskyy, P., Stapel, J. C. J., Dodou, D., Gavrila, D., & De Winter, J. C. F. (2021). Towards the detection of driver–pedestrian eye contact. Pervasive and Mobile Computing, 76, 101455. https://doi.org/10.1016/j.pmcj.2021.101455
+> Onkhar, V., Bazilinskyy, P., Dodou, D., & De Winter, J. C. F. (2022). The effect of drivers’ eye contact on pedestrians’ perceived safety. Transportation research part F: traffic psychology and behaviour, 84, 194-210. https://doi.org/10.1016/j.trf.2021.10.017
